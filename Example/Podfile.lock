@@ -14,38 +14,15 @@ PODS:
   - AFNetworking/Serialization (3.2.1)
   - AFNetworking/UIKit (3.2.1):
     - AFNetworking/NSURLSession
-  - AWSCore (2.6.25)
-  - AWSMobileAnalytics (2.6.25):
-    - AWSCore (= 2.6.25)
-  - GCDWebServer (3.4.2):
-    - GCDWebServer/Core (= 3.4.2)
-  - GCDWebServer/Core (3.4.2)
-  - MMMaterialDesignSpinner (0.2.5)
   - NSR (2.0.0):
     - AFNetworking
-    - AWSMobileAnalytics
-    - GCDWebServer
-    - MMMaterialDesignSpinner
-    - SAMKeychain
-    - UIColor-Utilities
-    - ZipArchive
-  - SAMKeychain (1.5.3)
-  - UIColor-Utilities (1.0.1)
-  - ZipArchive (1.4.0)
 
 DEPENDENCIES:
   - NSR (from `../`)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  https://github.com/CocoaPods/Specs.git:
     - AFNetworking
-    - AWSCore
-    - AWSMobileAnalytics
-    - GCDWebServer
-    - MMMaterialDesignSpinner
-    - SAMKeychain
-    - UIColor-Utilities
-    - ZipArchive
 
 EXTERNAL SOURCES:
   NSR:
@@ -53,15 +30,8 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
-  AWSCore: 93ac57c361f6ff9c0749adf9404c4a1a1ecdaa2b
-  AWSMobileAnalytics: fae6e5fadd89e5e040270646d09ea923f7cd474d
-  GCDWebServer: 8d67ee9f634b4bb91eb4b8aee440318a5fc6debd
-  MMMaterialDesignSpinner: a548042720c2e5f04212048483085d7942ac3e81
-  NSR: d6a551e426fd8f52ef83f10fc8f058b8c05beb48
-  SAMKeychain: 483e1c9f32984d50ca961e26818a534283b4cd5c
-  UIColor-Utilities: 6746a54dcdb3bc012dd7aeaeea5588ae2100beb2
-  ZipArchive: e25a4373192673e3229ac8d6e9f64a3e5713c966
+  NSR: 63963f5b58c25e2a748387f39c3465ecdeb1ff91
 
-PODFILE CHECKSUM: 4487a3bcbbfe691d6ebb05cedf07013f750c9154
+PODFILE CHECKSUM: 5cac096783b4577d5ce4cf92957f0d7dc0cf7e7a
 
-COCOAPODS: 1.5.3
+COCOAPODS: 1.5.0
