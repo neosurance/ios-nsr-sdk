@@ -1,0 +1,10 @@
+use_frameworks!
+
+target 'NSR_Example' do
+  pod 'NSR', :path => '../'
+
+  target 'NSR_Tests' do
+    inherit! :search_paths
+    
+  end
+end
