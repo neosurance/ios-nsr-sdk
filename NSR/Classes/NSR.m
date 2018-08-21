@@ -1,12 +1,11 @@
+#import <math.h>
 #import "NSR.h"
 #import "NSRDefaultSecurityDelegate.h"
 #import "NSRControllerWebView.h"
 
 @implementation NSR
 
-@synthesize securityDelegate, workflowDelegate;
-
-+ (id)sharedInstance {
++(id)sharedInstance {
 	static NSR *sharedInstance = nil;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
@@ -16,7 +15,7 @@
 	return sharedInstance;
 }
 
-- (id)init {
+-(id)init {
 	if (self = [super init]) {
 		self.pushPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:[[self frameworkBundle] URLForResource:@"NSR_push" withExtension:@"wav"] error:nil];
 		self.pushPlayer.volume = 1;
@@ -28,21 +27,222 @@
 		self.significantLocationManager.delegate = self;
 		[self.significantLocationManager requestAlwaysAuthorization];
 		
-		self.stillLocation = NO;
+		self.stillLocationManager = [[CLLocationManager alloc] init];
+		[self.stillLocationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.stillLocationManager setPausesLocationUpdatesAutomatically:NO];
+		[self.stillLocationManager setDistanceFilter:kCLDistanceFilterNone];
+		[self.stillLocationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		[self.stillLocationManager requestAlwaysAuthorization];
+		
 		self.motionActivityManager = [[CMMotionActivityManager alloc] init];
+		self.motionActivities = [[NSMutableArray alloc] init];
+		activityInited = NO;
+		
+		[[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
+			[self traceConnection:status];
+		}];
+		
+		stillLocationSent = NO;
+		controllerWebView = nil;
+		lastConnection = nil;
+		lastPower = nil;
+		lastActivity = nil;
+		
+		[self initJob];
 	}
 	return self;
 }
 
-- (NSString*)version {
+-(void)initJob {
+	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
+	
+	[self.significantLocationManager stopMonitoringSignificantLocationChanges];
+	
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(tracePower) object: nil];
+	
+	if(activityInited) {
+		[self.motionActivityManager stopActivityUpdates];
+		activityInited = NO;
+	}
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	
+	NSDictionary* conf = [self getConf];
+	if(conf !=nil){
+		if([conf[@"connection"][@"enabled"] boolValue]) {
+			[[AFNetworkReachabilityManager sharedManager] startMonitoring];
+		}
+		if([conf[@"power"][@"enabled"] boolValue]) {
+			[self performSelector:@selector(tracePower) withObject: nil afterDelay: 5];
+		}
+		if([conf[@"activity"][@"enabled"] boolValue]) {
+			[self.motionActivityManager startActivityUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMMotionActivity* activity) {
+				[self traceActivity:activity];
+			}];
+			activityInited = YES;
+		}
+		if([conf[@"position"][@"enabled"] boolValue]) {
+			[self.significantLocationManager startMonitoringSignificantLocationChanges];
+		}
+	}
+}
+
+-(void)tracePower {
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"power"][@"enabled"] boolValue]) {
+		UIDevice* currentDevice = [UIDevice currentDevice];
+		[currentDevice setBatteryMonitoringEnabled:YES];
+		UIDeviceBatteryState batteryState = [currentDevice batteryState];
+		int batteryLevel = (int)([currentDevice batteryLevel]*100);
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		[payload setObject:[NSNumber numberWithInteger: batteryLevel] forKey:@"level"];
+		if(batteryState == UIDeviceBatteryStateUnplugged) {
+			[payload setObject:@"unplugged" forKey:@"type"];
+		} else {
+			[payload setObject:@"plugged" forKey:@"type"];
+		}
+		if([payload[@"type"] compare:lastPower] != NSOrderedSame || abs(batteryLevel - lastPowerLevel) > 5) {
+			lastPower = payload[@"type"];
+			lastPowerLevel = batteryLevel;
+			[self sendEvent:@"power" payload:payload];
+		}
+		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
+	}
+}
+
+-(void)traceConnection:(AFNetworkReachabilityStatus)status {
+	NSDictionary* conf = [self getConf];
+	if(conf !=nil && [conf[@"connection"][@"enabled"] boolValue]) {
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		NSString* connection = nil;
+		if (status == AFNetworkReachabilityStatusReachableViaWiFi) {
+			connection = @"wi-fi";
+		} else if (status == AFNetworkReachabilityStatusReachableViaWWAN) {
+			connection = @"mobile";
+		}
+		if(connection != nil && [connection compare:lastConnection] != NSOrderedSame) {
+			[payload setObject:connection forKey:@"type"];
+			[self sendEvent:@"connection" payload:payload];
+			lastConnection = connection;
+		}
+		NSLog(@"traceConnection: %@",connection);
+	}
+}
+
+-(void)traceActivity:(CMMotionActivity*) activity {
+	NSLog(@"traceActivity IN");
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 5];
+	if([self.motionActivities count] == 0) {
+		[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+		[self performSelector:@selector(recoveryActivity) withObject: nil afterDelay: 15];
+	}
+	[self.motionActivities addObject:activity];
+}
+
+-(void)sendActivity {
+	NSLog(@"sendActivity");
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	[self innerSendActivity];
+}
+
+-(void)recoveryActivity {
+	NSLog(@"recoveryActivity");
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	[self innerSendActivity];
+}
+
+-(void) innerSendActivity {
+	NSLog(@"innerSendActivity");
+	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+	
+	int walkNumber = 0;
+	int stillNumber = 0;
+	int carNumber = 0;
+	int runNumber = 0;
+	int bicycleNumber = 0;
+	CMMotionActivity* motionToSend = nil;
+	int toSendNumber = 0;
+	
+	for (CMMotionActivity* activity in self.motionActivities)
+	{
+		if(activity.walking)  {
+			walkNumber++;
+			if(walkNumber > toSendNumber){
+				toSendNumber = walkNumber;
+				motionToSend = activity;
+				[payload setObject:@"walk" forKey:@"type"];
+			}
+		} else if(activity.stationary)  {
+			stillNumber++;
+			if(stillNumber > toSendNumber){
+				toSendNumber = stillNumber;
+				motionToSend = activity;
+				[payload setObject:@"still" forKey:@"type"];
+			}
+		} else if(activity.automotive)  {
+			carNumber++;
+			if(carNumber > toSendNumber){
+				toSendNumber = carNumber;
+				motionToSend = activity;
+				[payload setObject:@"car" forKey:@"type"];
+			}
+		} else if(activity.running)  {
+			runNumber++;
+			if(runNumber > toSendNumber){
+				toSendNumber = runNumber;
+				motionToSend = activity;
+				[payload setObject:@"run" forKey:@"type"];
+			}
+		} else if(activity.cycling)  {
+			bicycleNumber++;
+			if(bicycleNumber > toSendNumber){
+				toSendNumber = bicycleNumber;
+				motionToSend = activity;
+				[payload setObject:@"bicycle" forKey:@"type"];
+			}
+		}
+	}
+	[self.motionActivities removeAllObjects];
+	
+	if(motionToSend != nil) {
+		NSLog(@"activity.type  %@", payload[@"type"]);
+		if(motionToSend.confidence == CMMotionActivityConfidenceLow) {
+			[payload setObject:[NSNumber numberWithInt:25] forKey:@"confidence"];
+		} else if(motionToSend.confidence == CMMotionActivityConfidenceMedium) {
+			[payload setObject:[NSNumber numberWithInt:50] forKey:@"confidence"];
+		} else if(motionToSend.confidence == CMMotionActivityConfidenceHigh) {
+			[payload setObject:[NSNumber numberWithInt:100] forKey:@"confidence"];
+		}
+		int confidence = [payload[@"confidence"] intValue];
+		NSLog(@"activity.confidence  %i", confidence);
+		NSDictionary* conf = [self getConf];
+		if(conf != nil){
+			int minConfidence = [conf[@"activity"][@"confidence"] intValue];
+			if(confidence >= minConfidence) {
+				if([payload[@"type"] compare:lastActivity] != NSOrderedSame) {
+					lastActivity = payload[@"type"];
+					[self sendEvent:@"activity" payload:payload];
+					if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && motionToSend.stationary) {
+						[self.stillLocationManager startUpdatingLocation];
+					}
+				}
+			}
+		}
+	}
+}
+
+-(NSString*)version {
 	return @"2.0";
 }
 
-- (NSString*)os {
+-(NSString*)os {
 	return @"iOS";
 }
 
-- (void)setup:(NSDictionary*)settings {
+-(void)setup:(NSDictionary*)settings {
 	NSLog(@"setup");
 	NSMutableDictionary* mutableSettings = [[NSMutableDictionary alloc] initWithDictionary:settings];
 	NSLog(@"%@", mutableSettings);
@@ -57,7 +257,7 @@
 	[self setSettings: mutableSettings];
 }
 
-- (void)registerUser:(NSRUser*) user {
+-(void)registerUser:(NSRUser*) user {
 	NSLog(@"registerUser %@", [user toDict:YES]);
 	[self forgetUser];
 	[self setUser:user];
@@ -155,7 +355,7 @@
 	}];
 }
 
-- (BOOL)forwardNotification:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
+-(BOOL)forwardNotification:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
 	NSDictionary* userInfo = response.notification.request.content.userInfo;
 	if(userInfo != nil && [@"NSR" isEqualToString:userInfo[@"provider"]]) {
 		[self showUrl:userInfo[@"url"]];
@@ -168,7 +368,7 @@
 	NSMutableDictionary* mPush = [[NSMutableDictionary alloc] initWithDictionary:push];
 	[mPush setObject:@"NSR" forKey:@"provider"];
 	
-	UNMutableNotificationContent* content = [UNMutableNotificationContent new];
+	UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
 	[content setTitle:mPush[@"title"]];
 	[content setBody:mPush[@"body"]];
 	[content setUserInfo:mPush];
@@ -273,6 +473,7 @@
 					NSLog(@"authorize auth: %@", auth);
 					[self setAuth:auth];
 					
+					NSDictionary* oldConf = [self getConf];
 					NSDictionary* conf = response[@"conf"];
 					NSLog(@"authorize conf: %@", conf);
 					[self setConf:conf];
@@ -281,6 +482,10 @@
 					NSLog(@"authorize appUrl: %@", appUrl);
 					[self setAppUrl:appUrl];
 					
+					if([self needsInitJob:conf oldConf:oldConf]){
+						NSLog(@"authorize needsInitJob");
+						[self initJob];
+					}
 					completionHandler(YES);
 				}
 			}
@@ -292,20 +497,25 @@
 	}
 }
 
-- (void)forgetUser {
+-(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {
+	return (oldConf == nil || [conf[@"time"] intValue] != [oldConf[@"time"] intValue]);
+}
+
+-(void)forgetUser {
 	NSLog(@"forgetUser");
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_conf"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_auth"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_appUrl"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_user"];
 	[[NSUserDefaults standardUserDefaults] synchronize];
+	[self initJob];
 }
 
 -(void)showApp {
 	[self showApp:nil];
 }
 
-- (void)showApp:(NSDictionary*)params {
+-(void)showApp:(NSDictionary*)params {
 	[self showUrl:[self getAppUrl] params:params];
 }
 
@@ -329,12 +539,27 @@
 			url = [url stringByAppendingString:value];
 		}
 	}
-	UIViewController* topController = [self topViewController];
-	NSRControllerWebView* controller = [NSRControllerWebView new];
-	controller.url = [NSURL URLWithString:url];
-	controller.barStyle = [topController preferredStatusBarStyle];
-	[controller.view setBackgroundColor:topController.view.backgroundColor];
-	[topController presentViewController:controller animated:YES completion:nil];
+	if (controllerWebView != nil) {
+		[controllerWebView navigate:url];
+	} else {
+		UIViewController* topController = [self topViewController];
+		NSRControllerWebView* controller = [[NSRControllerWebView alloc] init];
+		controller.url = [NSURL URLWithString:url];
+		controller.barStyle = [topController preferredStatusBarStyle];
+		[controller.view setBackgroundColor:topController.view.backgroundColor];
+		[topController presentViewController:controller animated:YES completion:nil];
+	}
+}
+
+-(void) registerWebView:(NSRControllerWebView*)newWebView {
+	if(controllerWebView != nil){
+		[controllerWebView close];
+	}
+	controllerWebView = newWebView;
+}
+
+-(void) clearWebView {
+	controllerWebView = nil;
 }
 
 -(NSString*)uuid {
@@ -355,11 +580,11 @@
 	return [NSBundle bundleWithPath:frameworkBundlePath];
 }
 
-- (UIViewController *)topViewController {
+-(UIViewController *)topViewController {
 	return [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
 }
 
-- (UIViewController *)topViewController:(UIViewController *)rootViewController {
+-(UIViewController *)topViewController:(UIViewController *)rootViewController {
 	if ([rootViewController isKindOfClass:[UINavigationController class]]) {
 		UINavigationController *navigationController = (UINavigationController *)rootViewController;
 		return [self topViewController:[navigationController.viewControllers lastObject]];
@@ -374,4 +599,28 @@
 	return rootViewController;
 }
 
+- (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
+	if(manager == self.stillLocationManager) {
+		[manager stopUpdatingLocation];
+	}
+	CLLocation *newLocation = [locations lastObject];
+	NSLog(@"enter didUpdateToLocation");
+	@try{
+		NSDictionary* conf = [self getConf];
+		if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
+			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
+			stillLocationSent = (manager == self.stillLocationManager);
+			[self sendEvent:@"position" payload:payload];
+		}
+	} @catch (NSException *e) {
+		NSLog(@"didUpdateToLocation ERROR");
+	}
+	NSLog(@"didUpdateToLocation exit");
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+	NSLog(@"didFailWithError");
+}
 @end

@@ -5,15 +5,13 @@
 
 -(void)loadView {
 	[super loadView];
-	
-	self.webConfiguration = [WKWebViewConfiguration new];
+	[[NSR sharedInstance] registerWebView:self];
+	self.webConfiguration = [[WKWebViewConfiguration alloc] init];
 	[self.webConfiguration.userContentController addScriptMessageHandler:self name:@"app"];
-	
 	int sh = [UIApplication sharedApplication].statusBarFrame.size.height;
 	CGSize size = self.view.frame.size;
 	self.webView = [[WKWebView alloc] initWithFrame:CGRectMake(0,sh, size.width, size.height-sh) configuration:self.webConfiguration];
 	self.webView.navigationDelegate = self;
-	self.webView.backgroundColor = self.view.backgroundColor;
 	self.webView.scrollView.showsVerticalScrollIndicator = NO;
 	self.webView.scrollView.showsHorizontalScrollIndicator = NO;
 	self.webView.scrollView.bounces = NO;
@@ -213,6 +211,7 @@
 
 -(void)close {
 	NSLog(@"%s", __FUNCTION__);
+	[[NSR sharedInstance] clearWebView];
 	[self dismissViewControllerAnimated:YES completion:^(){
 		[self.webView stopLoading];
 		[self.webView setNavigationDelegate: nil];

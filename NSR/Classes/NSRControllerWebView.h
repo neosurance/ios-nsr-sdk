@@ -12,4 +12,7 @@
 @property (strong, nonatomic) NSString* locationCallBack;
 @property (strong, nonatomic) NSString* photoCallBack;
 
+-(void)navigate:(NSString*)url;
+-(void)close;
+
 @end

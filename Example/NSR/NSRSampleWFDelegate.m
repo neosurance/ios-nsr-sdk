@@ -2,7 +2,12 @@
 
 @implementation NSRSampleWFDelegate
 
--(void)executeLogin:(NSString*)url {}
--(void)executePayment:(NSDictionary*)payment url:(NSString*)url{}
+-(BOOL)executeLogin:(NSString*)url {
+	return NO;
+	
+}
+-(NSDictionary*)executePayment:(NSDictionary*)payment url:(NSString*)url {
+	return nil;
+}
 
 @end

@@ -14,9 +14,9 @@
 - (IBAction)registerUser:(UIButton *)sender {
     NSLog(@"Register User");
     NSRUser* user = [[NSRUser alloc] init];
-    user.email = @"info@neosurance.eu";
-    user.code = @"info@neosurance.eu";
-    user.firstname = @"info";
+    user.email = @"XXX@neosurance.eu";
+    user.code = @"XXX@neosurance.eu";
+    user.firstname = @"XXX";
     user.lastname = @"neosurance";
     [[NSR sharedInstance] registerUser:user];
 }

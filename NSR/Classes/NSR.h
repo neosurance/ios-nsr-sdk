@@ -8,6 +8,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <sys/utsname.h>
 #import "NSRUser.h"
+#import "NSRControllerWebView.h"
 
 @protocol NSRSecurityDelegate <NSObject>
 -(void)secureRequest:(NSString* _Nullable)endpoint payload:(NSDictionary* _Nullable)payload headers:(NSDictionary* _Nullable)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
@@ -18,13 +19,22 @@
 -(NSDictionary*)executePayment:(NSDictionary*)payment url:(NSString*)url;
 @end
 
-@interface NSR : NSObject<CLLocationManagerDelegate>
-@property (nonatomic, strong)CLLocationManager* significantLocationManager;
-@property (nonatomic, strong)CMMotionActivityManager* motionActivityManager;
-@property (nonatomic, strong)AVAudioPlayer* pushPlayer;
+@interface NSR : NSObject<CLLocationManagerDelegate> {
+	NSRControllerWebView* controllerWebView;
+	NSString* lastConnection;
+	NSString* lastPower;
+	int lastPowerLevel;
+	NSString* lastActivity;
+	BOOL activityInited;
+	BOOL stillLocationSent;
+}
+@property (nonatomic, strong) CLLocationManager* significantLocationManager;
+@property (nonatomic, strong) CLLocationManager* stillLocationManager;
+@property (nonatomic, strong) CMMotionActivityManager* motionActivityManager;
+@property (nonatomic, strong) AVAudioPlayer* pushPlayer;
 @property (nonatomic, strong) id <NSRSecurityDelegate> securityDelegate;
 @property (nonatomic, strong) id <NSRWorkflowDelegate> workflowDelegate;
-@property (nonatomic) BOOL stillLocation;
+@property (nonatomic, strong) NSMutableArray* motionActivities;
 
 +(id) sharedInstance;
 -(void) setup:(NSDictionary*)settings;
@@ -50,4 +60,8 @@
 -(NSRUser*) getUser;
 -(NSString*) uuid;
 -(NSString*) dictToJson:(NSDictionary*) dict;
+
+-(void) registerWebView:(NSRControllerWebView*)controllerWebView;
+-(void) clearWebView;
+
 @end
