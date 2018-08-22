@@ -1,5 +1,4 @@
 #import <Foundation/Foundation.h>
-#import <AVFoundation/AVFoundation.h>
 #import <MapKit/MapKit.h>
 #import <CoreMotion/CoreMotion.h>
 #import <UserNotifications/UserNotifications.h>
@@ -9,6 +8,7 @@
 #import <sys/utsname.h>
 #import "NSRUser.h"
 #import "NSRControllerWebView.h"
+#import "NSREventWebView.h"
 
 @protocol NSRSecurityDelegate <NSObject>
 -(void)secureRequest:(NSString* _Nullable)endpoint payload:(NSDictionary* _Nullable)payload headers:(NSDictionary* _Nullable)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
@@ -21,6 +21,7 @@
 
 @interface NSR : NSObject<CLLocationManagerDelegate> {
 	NSRControllerWebView* controllerWebView;
+	NSREventWebView* eventWebView;
 	NSString* lastConnection;
 	NSString* lastPower;
 	int lastPowerLevel;
@@ -49,6 +50,7 @@
 -(void) showUrl:(NSString*)url params:(NSDictionary*)params;
 -(void) sendEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void) sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
+-(void) showPush:(NSDictionary*)push;
 -(BOOL) forwardNotification:(UNNotificationResponse*) response withCompletionHandler:(void(^)(void))completionHandler;
 
 -(NSDictionary*) getSettings;
@@ -60,6 +62,7 @@
 -(NSRUser*) getUser;
 -(NSString*) uuid;
 -(NSString*) dictToJson:(NSDictionary*) dict;
+-(NSBundle*) frameworkBundle;
 
 -(void) registerWebView:(NSRControllerWebView*)controllerWebView;
 -(void) clearWebView;

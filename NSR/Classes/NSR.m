@@ -44,6 +44,7 @@
 		
 		stillLocationSent = NO;
 		controllerWebView = nil;
+		eventWebView = nil;
 		lastConnection = nil;
 		lastPower = nil;
 		lastActivity = nil;
@@ -69,6 +70,11 @@
 	
 	NSDictionary* conf = [self getConf];
 	if(conf !=nil){
+		if (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]) {
+			NSLog(@"Making NSREventWebView");
+			eventWebView = [[NSREventWebView alloc] init];
+		}
+
 		if([conf[@"connection"][@"enabled"] boolValue]) {
 			[[AFNetworkReachabilityManager sharedManager] startMonitoring];
 		}
@@ -104,7 +110,7 @@
 		if([payload[@"type"] compare:lastPower] != NSOrderedSame || abs(batteryLevel - lastPowerLevel) > 5) {
 			lastPower = payload[@"type"];
 			lastPowerLevel = batteryLevel;
-			[self sendEvent:@"power" payload:payload];
+			[self crunchEvent:@"power" payload:payload];
 		}
 		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
 	}
@@ -122,7 +128,7 @@
 		}
 		if(connection != nil && [connection compare:lastConnection] != NSOrderedSame) {
 			[payload setObject:connection forKey:@"type"];
-			[self sendEvent:@"connection" payload:payload];
+			[self crunchEvent:@"connection" payload:payload];
 			lastConnection = connection;
 		}
 		NSLog(@"traceConnection: %@",connection);
@@ -224,7 +230,7 @@
 			if(confidence >= minConfidence) {
 				if([payload[@"type"] compare:lastActivity] != NSOrderedSame) {
 					lastActivity = payload[@"type"];
-					[self sendEvent:@"activity" payload:payload];
+					[self crunchEvent:@"activity" payload:payload];
 					if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && motionToSend.stationary) {
 						[self.stillLocationManager startUpdatingLocation];
 					}
@@ -269,6 +275,20 @@
 			NSLog(@"registerUser not authorized");
 		}
 	}];
+}
+
+
+-(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
+	NSDictionary* conf = [self getConf];
+	if (conf != nil && conf[@"local_tracking"] != nil && [conf[@"local_tracking"] boolValue]) {
+		NSLog(@"crunchEvent event %@", event);
+		NSLog(@"crunchEvent payload %@", payload);
+		if (eventWebView != nil) {
+			[eventWebView crunchEvent:event payload:payload];
+		}
+	} else {
+		[self sendEvent:event payload:payload];
+	}
 }
 
 -(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
@@ -358,7 +378,9 @@
 -(BOOL)forwardNotification:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
 	NSDictionary* userInfo = response.notification.request.content.userInfo;
 	if(userInfo != nil && [@"NSR" isEqualToString:userInfo[@"provider"]]) {
-		[self showUrl:userInfo[@"url"]];
+		if(userInfo[@"url"] != nil){
+			[self showUrl:userInfo[@"url"]];
+		}
 		return YES;
 	}
 	return NO;
@@ -488,8 +510,7 @@
 					}
 					completionHandler(YES);
 				}
-			}
-			 ];
+			}];
 		} @catch (NSException *e) {
 			NSLog(@"authorize ERROR");
 			completionHandler(NO);
@@ -498,7 +519,7 @@
 }
 
 -(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {
-	return (oldConf == nil || [conf[@"time"] intValue] != [oldConf[@"time"] intValue]);
+	return (oldConf == nil || [conf[@"time"] intValue] != [oldConf[@"time"] intValue] || (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]));
 }
 
 -(void)forgetUser {
@@ -562,7 +583,7 @@
 	controllerWebView = nil;
 }
 
--(NSString*)uuid {
+-(NSString*) uuid {
 	NSString* uuid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
 	NSLog(@"uuid: %@", uuid);
 	return uuid;
@@ -574,17 +595,17 @@
 	return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
--(NSBundle*)frameworkBundle {
+-(NSBundle*) frameworkBundle {
 	NSString* mainBundlePath = [[NSBundle bundleForClass:[NSR class]] resourcePath];
 	NSString* frameworkBundlePath = [mainBundlePath stringByAppendingPathComponent:@"NSR.bundle"];
 	return [NSBundle bundleWithPath:frameworkBundlePath];
 }
 
--(UIViewController *)topViewController {
+-(UIViewController*) topViewController {
 	return [self topViewController:[UIApplication sharedApplication].keyWindow.rootViewController];
 }
 
--(UIViewController *)topViewController:(UIViewController *)rootViewController {
+-(UIViewController*) topViewController:(UIViewController *)rootViewController {
 	if ([rootViewController isKindOfClass:[UINavigationController class]]) {
 		UINavigationController *navigationController = (UINavigationController *)rootViewController;
 		return [self topViewController:[navigationController.viewControllers lastObject]];
@@ -612,7 +633,7 @@
 			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
 			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
 			stillLocationSent = (manager == self.stillLocationManager);
-			[self sendEvent:@"position" payload:payload];
+			[self crunchEvent:@"position" payload:payload];
 		}
 	} @catch (NSException *e) {
 		NSLog(@"didUpdateToLocation ERROR");
@@ -620,7 +641,7 @@
 	NSLog(@"didUpdateToLocation exit");
 }
 
-- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+- (void) locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
 	NSLog(@"didFailWithError");
 }
 @end
