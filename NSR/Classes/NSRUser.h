@@ -1,20 +1,4 @@
-@interface NSRUser : NSObject {
-    NSString* code;
-    NSString* email;
-    NSString* firstname;
-    NSString* lastname;
-    NSString* mobile;
-    NSString* fiscalCode;
-    NSString* gender;
-    NSDate* birthday;
-    NSString* address;
-    NSString* zipCode;
-    NSString* city;
-    NSString* stateProvince;
-    NSString* country;
-    NSDictionary* extra;
-    NSDictionary* locals;
-}
+@interface NSRUser : NSObject
 
 @property(nonatomic, copy) NSString* code;
 @property(nonatomic, copy) NSString* email;

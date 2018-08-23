@@ -2,6 +2,7 @@
 #import "NSR.h"
 #import "NSRDefaultSecurityDelegate.h"
 #import "NSRControllerWebView.h"
+#import "NSREventWebView.h"
 
 @implementation NSR
 
@@ -48,8 +49,8 @@
 		lastConnection = nil;
 		lastPower = nil;
 		lastActivity = nil;
-		
-		[self initJob];
+		eventWebViewSynchTime = 0;
+		setupInited = NO;
 	}
 	return self;
 }
@@ -69,17 +70,18 @@
 	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
 	
 	NSDictionary* conf = [self getConf];
-	if(conf !=nil){
+	if(conf != nil){
 		if (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]) {
 			NSLog(@"Making NSREventWebView");
 			eventWebView = [[NSREventWebView alloc] init];
+			eventWebViewSynchTime = [[NSDate date] timeIntervalSince1970];
 		}
-
+		
 		if([conf[@"connection"][@"enabled"] boolValue]) {
 			[[AFNetworkReachabilityManager sharedManager] startMonitoring];
 		}
 		if([conf[@"power"][@"enabled"] boolValue]) {
-			[self performSelector:@selector(tracePower) withObject: nil afterDelay: 5];
+			[self tracePower];
 		}
 		if([conf[@"activity"][@"enabled"] boolValue]) {
 			[self.motionActivityManager startActivityUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMMotionActivity* activity) {
@@ -214,7 +216,6 @@
 	[self.motionActivities removeAllObjects];
 	
 	if(motionToSend != nil) {
-		NSLog(@"activity.type  %@", payload[@"type"]);
 		if(motionToSend.confidence == CMMotionActivityConfidenceLow) {
 			[payload setObject:[NSNumber numberWithInt:25] forKey:@"confidence"];
 		} else if(motionToSend.confidence == CMMotionActivityConfidenceMedium) {
@@ -223,17 +224,16 @@
 			[payload setObject:[NSNumber numberWithInt:100] forKey:@"confidence"];
 		}
 		int confidence = [payload[@"confidence"] intValue];
+		NSLog(@"activity.type  %@", payload[@"type"]);
 		NSLog(@"activity.confidence  %i", confidence);
 		NSDictionary* conf = [self getConf];
 		if(conf != nil){
 			int minConfidence = [conf[@"activity"][@"confidence"] intValue];
-			if(confidence >= minConfidence) {
-				if([payload[@"type"] compare:lastActivity] != NSOrderedSame) {
-					lastActivity = payload[@"type"];
-					[self crunchEvent:@"activity" payload:payload];
-					if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && motionToSend.stationary) {
-						[self.stillLocationManager startUpdatingLocation];
-					}
+			if(confidence >= minConfidence && [payload[@"type"] compare:lastActivity] != NSOrderedSame) {
+				lastActivity = payload[@"type"];
+				[self crunchEvent:@"activity" payload:payload];
+				if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && motionToSend.stationary) {
+					[self.stillLocationManager startUpdatingLocation];
 				}
 			}
 		}
@@ -261,6 +261,10 @@
 		[mutableSettings setObject:[NSNumber numberWithInt:0] forKey:@"dev_mode"];
 	}
 	[self setSettings: mutableSettings];
+	if(!setupInited){
+		setupInited = YES;
+		[self initJob];
+	}
 }
 
 -(void)registerUser:(NSRUser*) user {
@@ -276,7 +280,6 @@
 		}
 	}];
 }
-
 
 -(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
 	NSDictionary* conf = [self getConf];
@@ -470,51 +473,57 @@
 	if(auth != nil && [auth[@"expire"] longValue]/1000 > [[NSDate date] timeIntervalSince1970]) {
 		completionHandler(YES);
 	} else {
-		@try {
-			NSRUser* user = [self getUser];
-			NSDictionary* settings = [self getSettings];
-			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-			[payload setObject:user.code forKey:@"user_code"];
-			[payload setObject:settings[@"code"] forKey:@"code"];
-			[payload setObject:settings[@"secret_key"] forKey:@"secret_key"];
-			
-			NSMutableDictionary* sdkPayload = [[NSMutableDictionary alloc] init];
-			[sdkPayload setObject:[self version] forKey:@"version"];
-			[sdkPayload setObject:settings[@"dev_mode"] forKey:@"dev"];
-			[sdkPayload setObject:[self os] forKey:@"os"];
-			[payload setObject:sdkPayload forKey:@"sdk"];
-			
-			NSLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
-			[self.securityDelegate secureRequest:@"authorize" payload:payload headers:nil completionHandler:^(NSDictionary *responseObject, NSError *error) {
-				if (error) {
-					completionHandler(NO);
-				} else {
-					NSDictionary* response = [[NSMutableDictionary alloc] initWithDictionary:responseObject];
-					
-					NSDictionary* auth = response[@"auth"];
-					NSLog(@"authorize auth: %@", auth);
-					[self setAuth:auth];
-					
-					NSDictionary* oldConf = [self getConf];
-					NSDictionary* conf = response[@"conf"];
-					NSLog(@"authorize conf: %@", conf);
-					[self setConf:conf];
-					
-					NSString* appUrl = response[@"app_url"];
-					NSLog(@"authorize appUrl: %@", appUrl);
-					[self setAppUrl:appUrl];
-					
-					if([self needsInitJob:conf oldConf:oldConf]){
-						NSLog(@"authorize needsInitJob");
-						[self initJob];
-					}
-					completionHandler(YES);
+		NSRUser* user = [self getUser];
+		NSDictionary* settings = [self getSettings];
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		[payload setObject:user.code forKey:@"user_code"];
+		[payload setObject:settings[@"code"] forKey:@"code"];
+		[payload setObject:settings[@"secret_key"] forKey:@"secret_key"];
+		
+		NSMutableDictionary* sdkPayload = [[NSMutableDictionary alloc] init];
+		[sdkPayload setObject:[self version] forKey:@"version"];
+		[sdkPayload setObject:settings[@"dev_mode"] forKey:@"dev"];
+		[sdkPayload setObject:[self os] forKey:@"os"];
+		[payload setObject:sdkPayload forKey:@"sdk"];
+		
+		NSLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
+		[self.securityDelegate secureRequest:@"authorize" payload:payload headers:nil completionHandler:^(NSDictionary *responseObject, NSError *error) {
+			if (error) {
+				completionHandler(NO);
+			} else {
+				NSDictionary* response = [[NSMutableDictionary alloc] initWithDictionary:responseObject];
+				
+				NSDictionary* auth = response[@"auth"];
+				NSLog(@"authorize auth: %@", auth);
+				[self setAuth:auth];
+				
+				NSDictionary* oldConf = [self getConf];
+				NSDictionary* conf = response[@"conf"];
+				NSLog(@"authorize conf: %@", conf);
+				[self setConf:conf];
+				
+				NSString* appUrl = response[@"app_url"];
+				NSLog(@"authorize appUrl: %@", appUrl);
+				[self setAppUrl:appUrl];
+				
+				if([self needsInitJob:conf oldConf:oldConf]){
+					NSLog(@"authorize needsInitJob");
+					[self initJob];
 				}
-			}];
-		} @catch (NSException *e) {
-			NSLog(@"authorize ERROR");
-			completionHandler(NO);
-		}
+				if(conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]){
+					[self synchEventWebView];
+				}
+				completionHandler(YES);
+			}
+		}];
+	}
+}
+
+-(void)synchEventWebView {
+	long t = [[NSDate date] timeIntervalSince1970];
+	if(eventWebView != nil && t - eventWebViewSynchTime > (60*60*8)){
+		[eventWebView synch];
+		eventWebViewSynchTime = t;
 	}
 }
 
@@ -626,17 +635,13 @@
 	}
 	CLLocation *newLocation = [locations lastObject];
 	NSLog(@"enter didUpdateToLocation");
-	@try{
-		NSDictionary* conf = [self getConf];
-		if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
-			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
-			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
-			stillLocationSent = (manager == self.stillLocationManager);
-			[self crunchEvent:@"position" payload:payload];
-		}
-	} @catch (NSException *e) {
-		NSLog(@"didUpdateToLocation ERROR");
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
+		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
+		stillLocationSent = (manager == self.stillLocationManager);
+		[self crunchEvent:@"position" payload:payload];
 	}
 	NSLog(@"didUpdateToLocation exit");
 }

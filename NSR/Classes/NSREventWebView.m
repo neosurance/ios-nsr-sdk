@@ -64,9 +64,34 @@
 					NSMutableDictionary* address = [[NSMutableDictionary alloc] init];
 					[address setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
 					[address setObject:[placemark country] forKey:@"countryName"];
-					[address setObject:[placemark thoroughfare] forKey:@"address"];
+					NSString* addressString = [[placemark addressDictionary][@"FormattedAddressLines"] componentsJoinedByString:@", "];
+					[address setObject:addressString forKey:@"address"];
 					[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:address]]];
 				}
+			}];
+		}
+		if([@"callApi" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+			[nsr authorize:^(BOOL authorized) {
+				if(!authorized){
+					NSMutableDictionary* result = [[NSMutableDictionary alloc] init];
+					[result setObject:@"error" forKey:@"status"];
+					[result setObject:@"not authorized" forKey:@"message"];
+					[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:result]]];
+					return;
+				}
+				NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
+				[headers setObject:[nsr getToken] forKey:@"ns_token"];
+				[headers setObject:[nsr getLang] forKey:@"ns_lang"];
+				[nsr.securityDelegate secureRequest:body[@"endpoint"] payload:body[@"payload"] headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
+					if(error == nil) {
+						[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:responseObject]]];
+					} else {
+						NSMutableDictionary* result = [[NSMutableDictionary alloc] init];
+						[result setObject:@"error" forKey:@"status"];
+						[result setObject:[NSString stringWithFormat:@"%@", error] forKey:@"message"];
+						[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:result]]];
+					}
+				}];
 			}];
 		}
 	}

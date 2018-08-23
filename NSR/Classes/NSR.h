@@ -6,9 +6,11 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <sys/utsname.h>
-#import "NSRUser.h"
-#import "NSRControllerWebView.h"
 #import "NSREventWebView.h"
+#import "NSRControllerWebView.h"
+#import "NSRUser.h"
+
+//@class NSREventWebView;
 
 @protocol NSRSecurityDelegate <NSObject>
 -(void)secureRequest:(NSString* _Nullable)endpoint payload:(NSDictionary* _Nullable)payload headers:(NSDictionary* _Nullable)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
@@ -22,12 +24,14 @@
 @interface NSR : NSObject<CLLocationManagerDelegate> {
 	NSRControllerWebView* controllerWebView;
 	NSREventWebView* eventWebView;
+	long eventWebViewSynchTime;
 	NSString* lastConnection;
 	NSString* lastPower;
 	int lastPowerLevel;
 	NSString* lastActivity;
 	BOOL activityInited;
 	BOOL stillLocationSent;
+	BOOL setupInited;
 }
 @property (nonatomic, strong) CLLocationManager* significantLocationManager;
 @property (nonatomic, strong) CLLocationManager* stillLocationManager;

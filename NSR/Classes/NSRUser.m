@@ -2,102 +2,100 @@
 
 @implementation NSRUser
 
-@synthesize code,email,firstname,lastname,mobile,fiscalCode,gender,birthday,address,zipCode,city,stateProvince,country,extra,locals;
-
 - (void)fromDict:(NSDictionary*) dict {
     if([dict objectForKey:@"code"] != nil) {
-        code = [dict objectForKey:@"code"];
+        self.code = [dict objectForKey:@"code"];
     }
     if([dict objectForKey:@"email"] != nil) {
-        email = [dict objectForKey:@"email"];
+        self.email = [dict objectForKey:@"email"];
     }
     if([dict objectForKey:@"firstname"] != nil) {
-        firstname = [dict objectForKey:@"firstname"];
+        self.firstname = [dict objectForKey:@"firstname"];
     }
     if([dict objectForKey:@"lastname"] != nil) {
-        lastname = [dict objectForKey:@"lastname"];
+        self.lastname = [dict objectForKey:@"lastname"];
     }
     if([dict objectForKey:@"mobile"] != nil) {
-        mobile = [dict objectForKey:@"mobile"];
+        self.mobile = [dict objectForKey:@"mobile"];
     }
     if([dict objectForKey:@"fiscalCode"] != nil) {
-        fiscalCode = [dict objectForKey:@"fiscalCode"];
+        self.fiscalCode = [dict objectForKey:@"fiscalCode"];
     }
     if([dict objectForKey:@"gender"] != nil) {
-        gender = [dict objectForKey:@"gender"];
+        self.gender = [dict objectForKey:@"gender"];
     }
     if([dict objectForKey:@"birthday"] != nil) {
-        birthday = [dict objectForKey:@"birthday"];
+        self.birthday = [dict objectForKey:@"birthday"];
     }
     if([dict objectForKey:@"address"] != nil) {
-        address = [dict objectForKey:@"address"];
+        self.address = [dict objectForKey:@"address"];
     }
     if([dict objectForKey:@"zipCode"] != nil) {
-        zipCode = [dict objectForKey:@"zipCode"];
+        self.zipCode = [dict objectForKey:@"zipCode"];
     }
     if([dict objectForKey:@"city"] != nil) {
-        city = [dict objectForKey:@"city"];
+        self.city = [dict objectForKey:@"city"];
     }
     if([dict objectForKey:@"stateProvince"] != nil) {
-        stateProvince = [dict objectForKey:@"stateProvince"];
+        self.stateProvince = [dict objectForKey:@"stateProvince"];
     }
     if([dict objectForKey:@"country"] != nil) {
-        country = [dict objectForKey:@"country"];
+       self.country = [dict objectForKey:@"country"];
     }
     if([dict objectForKey:@"extra"] != nil) {
-        extra = [dict objectForKey:@"extra"];
+        self.extra = [dict objectForKey:@"extra"];
     }
     if([dict objectForKey:@"locals"] != nil) {
-        locals = [dict objectForKey:@"locals"];
+        self.locals = [dict objectForKey:@"locals"];
     }
 }
 
 - (NSDictionary*)toDict:(BOOL) withLocals {
     NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-    if(code != nil) {
-        [dict setObject:code forKey:@"code"];
+    if(self.code != nil) {
+        [dict setObject:self.code forKey:@"code"];
     }
-    if(email != nil) {
-        [dict setObject:email forKey:@"email"];
+    if(self.email != nil) {
+        [dict setObject:self.email forKey:@"email"];
     }
-    if(firstname != nil) {
-        [dict setObject:firstname forKey:@"firstname"];
+    if(self.firstname != nil) {
+        [dict setObject:self.firstname forKey:@"firstname"];
     }
-    if(lastname != nil) {
-        [dict setObject:lastname forKey:@"lastname"];
+    if(self.lastname != nil) {
+        [dict setObject:self.lastname forKey:@"lastname"];
     }
-    if(mobile != nil) {
-        [dict setObject:mobile forKey:@"mobile"];
+    if(self.mobile != nil) {
+        [dict setObject:self.mobile forKey:@"mobile"];
     }
-    if(fiscalCode != nil) {
-        [dict setObject:fiscalCode forKey:@"fiscalCode"];
+    if(self.fiscalCode != nil) {
+        [dict setObject:self.fiscalCode forKey:@"fiscalCode"];
     }
-    if(gender != nil) {
-        [dict setObject:gender forKey:@"gender"];
+    if(self.gender != nil) {
+        [dict setObject:self.gender forKey:@"gender"];
     }
-    if(birthday != nil) {
-        [dict setObject:birthday forKey:@"birthday"];
+    if(self.birthday != nil) {
+        [dict setObject:self.birthday forKey:@"birthday"];
     }
-    if(address != nil) {
-        [dict setObject:address forKey:@"address"];
+    if(self.address != nil) {
+        [dict setObject:self.address forKey:@"address"];
     }
-    if(zipCode != nil) {
-        [dict setObject:zipCode forKey:@"zipCode"];
+    if(self.zipCode != nil) {
+        [dict setObject:self.zipCode forKey:@"zipCode"];
     }
-    if(city != nil) {
-        [dict setObject:city forKey:@"city"];
+    if(self.city != nil) {
+        [dict setObject:self.city forKey:@"city"];
     }
-    if(stateProvince != nil) {
-        [dict setObject:stateProvince forKey:@"stateProvince"];
+    if(self.stateProvince != nil) {
+        [dict setObject:self.stateProvince forKey:@"stateProvince"];
     }
-    if(country != nil) {
-        [dict setObject:country forKey:@"country"];
+    if(self.country != nil) {
+        [dict setObject:self.country forKey:@"country"];
     }
-    if(extra != nil) {
-        [dict setObject:extra forKey:@"extra"];
+    if(self.extra != nil) {
+        [dict setObject:self.extra forKey:@"extra"];
     }
-    if(locals != nil && withLocals) {
-        [dict setObject:locals forKey:@"locals"];
+    if(self.locals != nil && withLocals) {
+        [dict setObject:self.locals forKey:@"locals"];
     }
     return dict;
 }

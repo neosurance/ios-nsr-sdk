@@ -19,60 +19,11 @@
 		return results == null ? null : decodeURIComponent(results[1].replace(/\+/g, " "))
 	}
 
-	function logErr(xhr) {
-		try {
-			console.log(JSON.parse(xhr.responseText))
-		} catch (err) {
-			console.log(xhr.responseText)
-		}
-	}
-
-	function callApi(api, payload, okHandler, errHandler) {
-		var xhr = new XMLHttpRequest()
-		if (payload) {
-			xhr.open('POST', ns_api + api)
-			xhr.setRequestHeader("Content-Type", "application/json")
-		} else
-			xhr.open('GET', ns_api + api)
-		if (ns_token != null)
-			xhr.setRequestHeader("ns_token", ns_token)
-		if (ns_lang != null)
-			xhr.setRequestHeader("ns_lang", ns_lang)
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4) {
-				if (xhr.status == 200) {
-					var res = JSON.parse(xhr.responseText)
-					if (res.auth)
-						ns_token = res.auth.token
-					if (okHandler)
-						okHandler(res)
-				} else {
-					if (errHandler)
-						errHandler(xhr)
-					else
-						logErr(xhr)
-				}
-			}
-		}
-		if (payload)
-			xhr.send(JSON.stringify(payload))
-		else
-			xhr.send()
-	}
-
 	function init() {
-		try {
-			NSRPostMsg({
-				what : 'init',
-				callBack : 'initApp'
-			})
-		} catch (err) {
-			initApp({
-				lang : getParameter('ns_lang'),
-				api : getParameter('ns_api'),
-				token : getParameter('ns_token')
-			})
-		}
+		NSRPostMsg({
+			what : 'init',
+			callBack : 'initApp'
+		})
 	}
 
 	function initApp(initVal) {
@@ -81,22 +32,30 @@
 		ns_token = initVal.token
 
 		if(localStorage.getItem("nsr_chains") != null)
-		    window.eval(localStorage.getItem("nsr_chains"))
+			window.eval(localStorage.getItem("nsr_chains"))
 
 		synch()
 	}
 
 	function synch() {
+		NSRPostMsg({log : 'eventView Synch!'})
 		var t = localStorage.getItem("nsr_chainstime")
 		t = t == null ? 0 : parseInt(t, 10)
-		callApi('chains?t=' + t, null, function(res) {
-			if (res.status == 'ok') {
-				console.log('refresh chains!')
-				localStorage.setItem("nsr_chainstime", res.chains_time)
-				localStorage.setItem("nsr_chains", res.chains)
-			}
-			window.eval(localStorage.getItem("nsr_chains"))
+		NSRPostMsg({
+			what : 'callApi',
+			endpoint : 'chains?t=' + t,
+			callBack : 'innerSynch'
 		})
+	}
+	
+	function innerSynch(res) {
+		NSRPostMsg({log : 'eventView innerSynch! ' + JSON.stringify(res)})
+		if (res.status == 'ok') {
+			console.log('refresh chains!')
+			localStorage.setItem("nsr_chainstime", res.chains_time)
+			localStorage.setItem("nsr_chains", res.chains)
+		}
+		window.eval(localStorage.getItem("nsr_chains"))
 	}
 	
 	init()

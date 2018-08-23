@@ -1,5 +1,4 @@
 #import <WebKit/WebKit.h>
-#import <MapKit/MapKit.h>
 
 @interface NSREventWebView : NSObject<WKScriptMessageHandler>
 
