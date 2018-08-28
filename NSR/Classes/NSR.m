@@ -311,6 +311,10 @@
 		
 		NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
 		[devicePayLoad setObject:[self uuid] forKey:@"uid"];
+		NSString* pushToken = [self getPushToken];
+		if(pushToken != nil) {
+			[devicePayLoad setObject:pushToken forKey:@"push_token"];
+		}
 		[devicePayLoad setObject:[self os] forKey:@"os"];
 		[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
 		struct utsname systemInfo;
@@ -447,6 +451,10 @@
 
 -(NSString*)getToken {
 	return [[self getAuth] objectForKey:@"token"];
+}
+
+-(NSString*)getPushToken {
+	return [[self getSettings] objectForKey:@"push_token"];
 }
 
 -(void)setConf:(NSDictionary*) conf{

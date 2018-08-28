@@ -41,6 +41,9 @@
 	if(body[@"event"] != nil && body[@"payload"] != nil) {
 		[nsr sendEvent:body[@"event"] payload:body[@"payload"]];
 	}
+	if(body[@"crunchEvent"] != nil && body[@"payload"] != nil) {
+		[nsr crunchEvent:body[@"event"] payload:body[@"payload"]];
+	}
 	if(body[@"action"] != nil) {
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}

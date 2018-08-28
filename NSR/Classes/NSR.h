@@ -53,6 +53,7 @@
 -(void) showUrl:(NSString*)url;
 -(void) showUrl:(NSString*)url params:(NSDictionary*)params;
 -(void) sendEvent:(NSString*)event payload:(NSDictionary*)payload;
+-(void) crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void) sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
 -(void) showPush:(NSDictionary*)push;
 -(BOOL) forwardNotification:(UNNotificationResponse*) response withCompletionHandler:(void(^)(void))completionHandler;
