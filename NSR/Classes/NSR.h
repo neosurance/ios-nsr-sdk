@@ -10,8 +10,6 @@
 #import "NSRControllerWebView.h"
 #import "NSRUser.h"
 
-//@class NSREventWebView;
-
 @protocol NSRSecurityDelegate <NSObject>
 -(void)secureRequest:(NSString* _Nullable)endpoint payload:(NSDictionary* _Nullable)payload headers:(NSDictionary* _Nullable)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
 @end
