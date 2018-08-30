@@ -26,8 +26,8 @@ pod 'NSR'
 	```plist
 	<key>NSAppTransportSecurity</key>
 	<dict>
-			<key>NSAllowsArbitraryLoads</key>
-			<true/>
+	  <key>NSAllowsArbitraryLoads</key>
+	  <true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>use camera...</string>
@@ -41,9 +41,9 @@ pod 'NSR'
 	<string>Motion...</string>
 	<key>UIBackgroundModes</key>
 	<array>
-			<string>fetch</string>
-			<string>location</string>
-			<string>remote-notification</string>
+	  <string>fetch</string>
+	  <string>location</string>
+	  <string>remote-notification</string>
 	</array>
 	```
 2. Add the following audio file <a href="https://github.com/neosurance/ios-sdk2/raw/master/Example/NSR_push.wav" download>NSR_push.waw</a> to your app resource bundles
