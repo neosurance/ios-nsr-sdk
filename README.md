@@ -46,7 +46,7 @@ pod 'NSR'
 	  <string>remote-notification</string>
 	</array>
 	```
-2. Add the following audio file <a href="https://github.com/neosurance/ios-sdk2/raw/master/Example/NSR_push.wav" download>NSR_push.waw</a> to your app resource bundles
+2. Add the following audio file <a href="https://github.com/neosurance/ios-sdk2/raw/master/Example/NSR_push.wav" download="NSR_push.waw">NSR_push.waw</a> to your app resource bundles
 
 ## Use
 
