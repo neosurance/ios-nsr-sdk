@@ -10,7 +10,7 @@ Neosurance SDK - Collects info from device sensors and from the hosting app - Ex
   s.homepage         = 'https://github.com/neosurance/ios-sdk2.git'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'Neosurance' => 'info@neosurance.eu' }
-  s.source           = { :git => 'https://github.com/neosurance/ios-sdk2', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/neosurance/ios-sdk2.git', :tag => s.version.to_s }
   s.ios.deployment_target = '10.0'
   s.source_files = 'NSR/Classes/**/*'
   s.resource_bundles = {
