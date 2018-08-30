@@ -103,8 +103,7 @@ pod 'NSR'
 	```objc
 	[[NSR sharedInstance] loginExecuted:<theGivenUrl>];
 	...
-	[[NSR sharedInstance] paymentExecuted:<theGivenUrl>]
-	NSR.getInstance(this).paymentExecuted:(<paymentTransactionInfo> url:<theGivenUrl>);
+	[[NSR sharedInstance] paymentExecuted:<paymentTransactionInfo> url:<theGivenUrl>];
 	```
 	
 4. ### registerUser  
