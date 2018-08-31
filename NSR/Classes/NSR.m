@@ -6,6 +6,14 @@
 
 @implementation NSR
 
+-(NSString*)version {
+	return @"2.0.1";
+}
+
+-(NSString*)os {
+	return @"iOS";
+}
+
 +(id)sharedInstance {
 	static NSR *sharedInstance = nil;
 	static dispatch_once_t onceToken;
@@ -238,14 +246,6 @@
 			}
 		}
 	}
-}
-
--(NSString*)version {
-	return @"2.0.0";
-}
-
--(NSString*)os {
-	return @"iOS";
 }
 
 -(void)setup:(NSDictionary*)settings {
@@ -483,6 +483,10 @@
 	} else {
 		NSRUser* user = [self getUser];
 		NSDictionary* settings = [self getSettings];
+		if(user == nil || settings == nil) {
+			completionHandler(NO);
+			return;
+		}
 		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 		[payload setObject:user.code forKey:@"user_code"];
 		[payload setObject:settings[@"code"] forKey:@"code"];
