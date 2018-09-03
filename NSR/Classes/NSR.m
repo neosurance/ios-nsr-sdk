@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.1";
+	return @"2.0.2";
 }
 
 -(NSString*)os {
@@ -483,51 +483,49 @@
 	} else {
 		NSRUser* user = [self getUser];
 		NSDictionary* settings = [self getSettings];
-		if(user == nil || settings == nil) {
-			completionHandler(NO);
-			return;
+		if(user != nil && settings != nil) {
+			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+			[payload setObject:user.code forKey:@"user_code"];
+			[payload setObject:settings[@"code"] forKey:@"code"];
+			[payload setObject:settings[@"secret_key"] forKey:@"secret_key"];
+			
+			NSMutableDictionary* sdkPayload = [[NSMutableDictionary alloc] init];
+			[sdkPayload setObject:[self version] forKey:@"version"];
+			[sdkPayload setObject:settings[@"dev_mode"] forKey:@"dev"];
+			[sdkPayload setObject:[self os] forKey:@"os"];
+			[payload setObject:sdkPayload forKey:@"sdk"];
+			
+			NSLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
+			[self.securityDelegate secureRequest:@"authorize" payload:payload headers:nil completionHandler:^(NSDictionary *responseObject, NSError *error) {
+				if (error) {
+					completionHandler(NO);
+				} else {
+					NSDictionary* response = [[NSMutableDictionary alloc] initWithDictionary:responseObject];
+					
+					NSDictionary* auth = response[@"auth"];
+					NSLog(@"authorize auth: %@", auth);
+					[self setAuth:auth];
+					
+					NSDictionary* oldConf = [self getConf];
+					NSDictionary* conf = response[@"conf"];
+					NSLog(@"authorize conf: %@", conf);
+					[self setConf:conf];
+					
+					NSString* appUrl = response[@"app_url"];
+					NSLog(@"authorize appUrl: %@", appUrl);
+					[self setAppUrl:appUrl];
+					
+					if([self needsInitJob:conf oldConf:oldConf]){
+						NSLog(@"authorize needsInitJob");
+						[self initJob];
+					}
+					if(conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]){
+						[self synchEventWebView];
+					}
+					completionHandler(YES);
+				}
+			}];
 		}
-		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-		[payload setObject:user.code forKey:@"user_code"];
-		[payload setObject:settings[@"code"] forKey:@"code"];
-		[payload setObject:settings[@"secret_key"] forKey:@"secret_key"];
-		
-		NSMutableDictionary* sdkPayload = [[NSMutableDictionary alloc] init];
-		[sdkPayload setObject:[self version] forKey:@"version"];
-		[sdkPayload setObject:settings[@"dev_mode"] forKey:@"dev"];
-		[sdkPayload setObject:[self os] forKey:@"os"];
-		[payload setObject:sdkPayload forKey:@"sdk"];
-		
-		NSLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
-		[self.securityDelegate secureRequest:@"authorize" payload:payload headers:nil completionHandler:^(NSDictionary *responseObject, NSError *error) {
-			if (error) {
-				completionHandler(NO);
-			} else {
-				NSDictionary* response = [[NSMutableDictionary alloc] initWithDictionary:responseObject];
-				
-				NSDictionary* auth = response[@"auth"];
-				NSLog(@"authorize auth: %@", auth);
-				[self setAuth:auth];
-				
-				NSDictionary* oldConf = [self getConf];
-				NSDictionary* conf = response[@"conf"];
-				NSLog(@"authorize conf: %@", conf);
-				[self setConf:conf];
-				
-				NSString* appUrl = response[@"app_url"];
-				NSLog(@"authorize appUrl: %@", appUrl);
-				[self setAppUrl:appUrl];
-				
-				if([self needsInitJob:conf oldConf:oldConf]){
-					NSLog(@"authorize needsInitJob");
-					[self initJob];
-				}
-				if(conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]){
-					[self synchEventWebView];
-				}
-				completionHandler(YES);
-			}
-		}];
 	}
 }
 
