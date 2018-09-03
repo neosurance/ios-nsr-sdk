@@ -1,4 +1,4 @@
-@interface NSRUser : NSObject
+@interface NSRUser:NSObject
 
 @property(nonatomic, copy) NSString* code;
 @property(nonatomic, copy) NSString* email;
@@ -16,7 +16,7 @@
 @property(nonatomic, copy) NSDictionary* extra;
 @property(nonatomic, copy) NSDictionary* locals;
 
-- (void)fromDict:(NSDictionary*)dict;
-- (NSDictionary*)toDict:(BOOL)withLocals;
+-(id)initWithDict:(NSDictionary*) dict;
+-(NSDictionary*)toDict:(BOOL)withLocals;
 
 @end

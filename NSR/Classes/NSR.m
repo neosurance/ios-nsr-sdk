@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.2";
+	return @"2.0.3";
 }
 
 -(NSString*)os {
@@ -420,9 +420,7 @@
 -(NSRUser*)getUser {
 	NSDictionary* userDict = [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_user"];
 	if(userDict != nil) {
-		NSRUser* user = [[NSRUser alloc] init];
-		[user fromDict:userDict];
-		return user;
+		return [[NSRUser alloc] initWithDict:userDict];
 	}
 	return nil;
 }
