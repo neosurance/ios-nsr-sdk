@@ -56,9 +56,10 @@ pod 'NSR'
 	**base_url**: provided by us, used only if no *securityDelegate* is configured  
 	**code**: the community code provided by us  
 	**secret_key**: the community secret key provided by us  
-	**dev_mode** *optional*: [0|1] activate the *developer mode*
-	**bar_style** *optional*: [UIStatusBarStyleDefault|UIStatusBarStyleLightContent] specify status bar style in webview (if not specifide the curent style will be used)
-	**back_color** *optional*: [UIColor] specify status bar background  in webview
+	**dev_mode** *optional*: [0|1] activate the *developer mode*  
+	**bar_style** *optional*: [UIStatusBarStyleDefault|UIStatusBarStyleLightContent] specify status bar style in webview (if not specifide the current style will be used)  
+	**back_color** *optional*: [UIColor] specify status bar background in webview (if not specifide the current background will be used)  
+ 
 
 	```objc
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
