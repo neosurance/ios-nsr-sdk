@@ -56,13 +56,17 @@ pod 'NSR'
 	**base_url**: provided by us, used only if no *securityDelegate* is configured  
 	**code**: the community code provided by us  
 	**secret_key**: the community secret key provided by us  
-	**dev_mode** *optional*: [0|1] activate the *developer mode*	
-	
+	**dev_mode** *optional*: [0|1] activate the *developer mode*
+	**bar_style** *optional*: [UIStatusBarStyleDefault|UIStatusBarStyleLightContent] specify status bar style in webview (if not specifide the curent style will be used)
+	**back_color** *optional*: [UIColor] specify status bar background  in webview
+
 	```objc
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
 	[settings setObject:@"https://<provided base url>/" forKey:@"base_url"];
 	[settings setObject:@"<provided code>" forKey:@"code"];
 	[settings setObject:@"<provided secret_key>" forKey:@"secret_key"];
+	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
+	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
 	[[NSR sharedInstance] setup:settings];
 	```
 2. ### setSecurityDelegate *optional*

@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.3";
+	return @"2.0.4";
 }
 
 -(NSString*)os {
@@ -257,8 +257,21 @@
 		NSDictionary *languageDic = [NSLocale componentsFromLocaleIdentifier:language];
 		[mutableSettings setObject:languageDic[NSLocaleLanguageCode] forKey:@"ns_lang"];
 	}
-	if(mutableSettings[@"dev_mode"]  == nil) {
+	if(mutableSettings[@"dev_mode"] == nil) {
 		[mutableSettings setObject:[NSNumber numberWithInt:0] forKey:@"dev_mode"];
+	}
+	if(mutableSettings[@"back_color"] != nil) {
+		UIColor* c = mutableSettings[@"back_color"];
+		[mutableSettings removeObjectForKey:@"back_color"];
+		CGFloat r;
+		CGFloat g;
+		CGFloat b;
+		CGFloat a;
+		[c getRed:&r green:&g blue:&b alpha:&a];
+		[mutableSettings setObject:[NSNumber numberWithFloat:r] forKey:@"back_color_r"];
+		[mutableSettings setObject:[NSNumber numberWithFloat:g] forKey:@"back_color_g"];
+		[mutableSettings setObject:[NSNumber numberWithFloat:b] forKey:@"back_color_b"];
+		[mutableSettings setObject:[NSNumber numberWithFloat:a] forKey:@"back_color_a"];
 	}
 	[self setSettings: mutableSettings];
 	if(!setupInited){
@@ -583,8 +596,21 @@
 		UIViewController* topController = [self topViewController];
 		NSRControllerWebView* controller = [[NSRControllerWebView alloc] init];
 		controller.url = [NSURL URLWithString:url];
-		controller.barStyle = [topController preferredStatusBarStyle];
-		[controller.view setBackgroundColor:topController.view.backgroundColor];
+		if([self getSettings][@"bar_style"] != nil){
+			controller.barStyle = [[self getSettings][@"bar_style"] integerValue];
+		}else{
+			controller.barStyle = [topController preferredStatusBarStyle];
+		}
+		if([self getSettings][@"back_color_r"] != nil){
+			CGFloat r = [[self getSettings][@"back_color_r"] floatValue];
+			CGFloat g = [[self getSettings][@"back_color_g"] floatValue];
+			CGFloat b = [[self getSettings][@"back_color_b"] floatValue];
+			CGFloat a = [[self getSettings][@"back_color_a"] floatValue];
+			UIColor* c = [UIColor colorWithRed:r green:g blue:b alpha:a];
+			[controller.view setBackgroundColor:c];
+		}else{
+			[controller.view setBackgroundColor:topController.view.backgroundColor];
+		}
 		[topController presentViewController:controller animated:YES completion:nil];
 	}
 }

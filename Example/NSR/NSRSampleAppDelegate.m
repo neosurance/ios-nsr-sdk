@@ -18,6 +18,10 @@
 	[settings setObject:@"bikevo" forKey:@"code"];
 	[settings setObject:@"uIMM9gQ5e1BDaUKtLP" forKey:@"secret_key"];
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
+	
+	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
+	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
+
 	[[NSR sharedInstance] setup:settings];
 	
 	return YES;
