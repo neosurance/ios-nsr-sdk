@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.5";
+	return @"2.0.6";
 }
 
 -(NSString*)os {
@@ -64,19 +64,18 @@
 }
 
 -(void)initJob {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
-	
 	[self.significantLocationManager stopMonitoringSignificantLocationChanges];
-	
 	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(tracePower) object: nil];
-	
 	if(activityInited) {
 		[self.motionActivityManager stopActivityUpdates];
 		activityInited = NO;
 	}
 	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
 	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
-	
 	NSDictionary* conf = [self getConf];
 	if(conf != nil){
 		if (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]) {
@@ -238,6 +237,9 @@
 }
 
 -(void)setup:(NSDictionary*)settings {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	NSLog(@"setup");
 	NSMutableDictionary* mutableSettings = [[NSMutableDictionary alloc] initWithDictionary:settings];
 	NSLog(@"%@", mutableSettings);
@@ -270,6 +272,9 @@
 }
 
 -(void)registerUser:(NSRUser*) user {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	NSLog(@"registerUser %@", [user toDict:YES]);
 	[self forgetUser];
 	[self setUser:user];
@@ -297,6 +302,9 @@
 }
 
 -(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	NSLog(@"sendEvent event %@", event);
 	NSLog(@"sendEvent payload %@", payload);
 	
@@ -353,6 +361,9 @@
 }
 
 -(void)sendAction:(NSString *)action policyCode:(NSString *)code details:(NSString *)details {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	NSLog(@"sendAction action %@", action);
 	NSLog(@"sendEvent policyCode %@", code);
 	NSLog(@"sendEvent details %@", details);
@@ -385,33 +396,35 @@
 }
 
 -(BOOL)forwardNotification:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
-	NSDictionary* userInfo = response.notification.request.content.userInfo;
-	if(userInfo != nil && [@"NSR" isEqualToString:userInfo[@"provider"]]) {
-		if(userInfo[@"url"] != nil){
-			[self showUrl:userInfo[@"url"]];
+	if (@available(iOS 10.0, *)) {
+		NSDictionary* userInfo = response.notification.request.content.userInfo;
+		if(userInfo != nil && [@"NSR" isEqualToString:userInfo[@"provider"]]) {
+			if(userInfo[@"url"] != nil){
+				[self showUrl:userInfo[@"url"]];
+			}
+			return YES;
 		}
-		return YES;
 	}
 	return NO;
 }
 
 -(void)showPush:(NSDictionary*)push {
-	NSMutableDictionary* mPush = [[NSMutableDictionary alloc] initWithDictionary:push];
-	[mPush setObject:@"NSR" forKey:@"provider"];
-	
-	UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
-	[content setTitle:mPush[@"title"]];
-	[content setBody:mPush[@"body"]];
-	[content setUserInfo:mPush];
-	if([[UIApplication sharedApplication] applicationState] == UIApplicationStateActive) {
-		[self.pushPlayer play];
-	} else {
-		[content setSound:[UNNotificationSound soundNamed:@"NSR_push.wav"]];
+	if (@available(iOS 10.0, *)) {
+		NSMutableDictionary* mPush = [[NSMutableDictionary alloc] initWithDictionary:push];
+		[mPush setObject:@"NSR" forKey:@"provider"];
+		UNMutableNotificationContent* content = [[UNMutableNotificationContent alloc] init];
+		[content setTitle:mPush[@"title"]];
+		[content setBody:mPush[@"body"]];
+		[content setUserInfo:mPush];
+		if([[UIApplication sharedApplication] applicationState] == UIApplicationStateActive) {
+			[self.pushPlayer play];
+		} else {
+			[content setSound:[UNNotificationSound soundNamed:@"NSR_push.wav"]];
+		}
+		UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
+		UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:[NSString stringWithFormat:@"NSR%@", [NSDate date]] content:content trigger:trigger];
+		[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
 	}
-	
-	UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
-	UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:[NSString stringWithFormat:@"NSR%@", [NSDate date]] content:content trigger:trigger];
-	[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
 }
 
 -(void)setUser:(NSRUser*) user{
@@ -545,6 +558,9 @@
 }
 
 -(void)forgetUser {
+	if([self gracefulDegradate]) {
+		return;
+	}
 	NSLog(@"forgetUser");
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_conf"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_auth"];
@@ -555,11 +571,15 @@
 }
 
 -(void)showApp {
-	[self showApp:nil];
+	if([self getAppUrl] != nil){
+		[self showUrl:[self getAppUrl] params:nil];
+	}
 }
 
 -(void)showApp:(NSDictionary*)params {
-	[self showUrl:[self getAppUrl] params:params];
+	if([self getAppUrl] != nil){
+		[self showUrl:[self getAppUrl] params:params];
+	}
 }
 
 -(void)showUrl:(NSString*) url {
@@ -674,5 +694,13 @@
 
 - (void) locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
 	NSLog(@"didFailWithError");
+}
+
+-(BOOL)gracefulDegradate {
+	if (@available(iOS 10.0, *)) {
+		return NO;
+	}else {
+		return YES;
+	}
 }
 @end

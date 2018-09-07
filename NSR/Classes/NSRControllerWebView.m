@@ -202,7 +202,9 @@
 	if(navigationAction.navigationType == WKNavigationTypeLinkActivated) {
 		NSString* url = [NSString stringWithFormat:@"%@", navigationAction.request.URL];
 		if([url hasSuffix:@".pdf"]) {
-			[[UIApplication sharedApplication] openURL:[NSURL URLWithString:url] options:@{} completionHandler:NULL];
+			if (@available(iOS 10.0, *)) {
+				[[UIApplication sharedApplication] openURL:[NSURL URLWithString:url] options:@{} completionHandler:NULL];
+			}
 			decisionHandler(WKNavigationActionPolicyCancel);
 		} else {
 			decisionHandler(WKNavigationActionPolicyAllow);
