@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.4";
+	return @"2.0.5";
 }
 
 -(NSString*)os {
@@ -82,7 +82,6 @@
 		if (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]) {
 			NSLog(@"Making NSREventWebView");
 			eventWebView = [[NSREventWebView alloc] init];
-			eventWebViewSynchTime = [[NSDate date] timeIntervalSince1970];
 		}
 		
 		if([conf[@"connection"][@"enabled"] boolValue]) {
@@ -148,104 +147,94 @@
 -(void)traceActivity:(CMMotionActivity*) activity {
 	NSLog(@"traceActivity IN");
 	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
-	[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 5];
+	[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 8];
 	if([self.motionActivities count] == 0) {
 		[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-		[self performSelector:@selector(recoveryActivity) withObject: nil afterDelay: 15];
+		[self performSelector:@selector(recoveryActivity) withObject: nil afterDelay: 16];
 	}
 	[self.motionActivities addObject:activity];
 }
 
 -(void)sendActivity {
 	NSLog(@"sendActivity");
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
 	[self innerSendActivity];
 }
 
 -(void)recoveryActivity {
 	NSLog(@"recoveryActivity");
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
 	[self innerSendActivity];
 }
 
 -(void) innerSendActivity {
-	NSLog(@"innerSendActivity");
-	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-	
-	int walkNumber = 0;
-	int stillNumber = 0;
-	int carNumber = 0;
-	int runNumber = 0;
-	int bicycleNumber = 0;
-	CMMotionActivity* motionToSend = nil;
-	int toSendNumber = 0;
-	
-	for (CMMotionActivity* activity in self.motionActivities)
-	{
-		if(activity.walking)  {
-			walkNumber++;
-			if(walkNumber > toSendNumber){
-				toSendNumber = walkNumber;
-				motionToSend = activity;
-				[payload setObject:@"walk" forKey:@"type"];
-			}
-		} else if(activity.stationary)  {
-			stillNumber++;
-			if(stillNumber > toSendNumber){
-				toSendNumber = stillNumber;
-				motionToSend = activity;
-				[payload setObject:@"still" forKey:@"type"];
-			}
-		} else if(activity.automotive)  {
-			carNumber++;
-			if(carNumber > toSendNumber){
-				toSendNumber = carNumber;
-				motionToSend = activity;
-				[payload setObject:@"car" forKey:@"type"];
-			}
-		} else if(activity.running)  {
-			runNumber++;
-			if(runNumber > toSendNumber){
-				toSendNumber = runNumber;
-				motionToSend = activity;
-				[payload setObject:@"run" forKey:@"type"];
-			}
-		} else if(activity.cycling)  {
-			bicycleNumber++;
-			if(bicycleNumber > toSendNumber){
-				toSendNumber = bicycleNumber;
-				motionToSend = activity;
-				[payload setObject:@"bicycle" forKey:@"type"];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	NSDictionary* conf = [self getConf];
+	if(conf == nil || [self.motionActivities count] == 0)
+		return;
+	NSDictionary* confidences = [[NSMutableDictionary alloc] init];
+	NSDictionary* counts = [[NSMutableDictionary alloc] init];
+	NSString* candidate = nil;
+	int maxConfidence = 0;
+	for (CMMotionActivity* activity in self.motionActivities) {
+		NSLog(@"activity type %@ confidence %i", [self activityType:activity], [self activityConfidence:activity]);
+		NSString* type = [self activityType:activity];
+		if(type != nil) {
+			int confidence = [confidences[type] intValue] + [self activityConfidence:activity];
+			[confidences setValue:[NSNumber numberWithInt:confidence] forKey:type];
+			int count = [counts[type] intValue] + 1;
+			[counts setValue:[NSNumber numberWithInt:count] forKey:type];
+			int weightedConfidence = confidence/count + (count*5);
+			if(weightedConfidence > maxConfidence){
+				candidate = type;
+				maxConfidence = weightedConfidence;
 			}
 		}
 	}
 	[self.motionActivities removeAllObjects];
-	
-	if(motionToSend != nil) {
-		if(motionToSend.confidence == CMMotionActivityConfidenceLow) {
-			[payload setObject:[NSNumber numberWithInt:25] forKey:@"confidence"];
-		} else if(motionToSend.confidence == CMMotionActivityConfidenceMedium) {
-			[payload setObject:[NSNumber numberWithInt:50] forKey:@"confidence"];
-		} else if(motionToSend.confidence == CMMotionActivityConfidenceHigh) {
-			[payload setObject:[NSNumber numberWithInt:100] forKey:@"confidence"];
-		}
-		int confidence = [payload[@"confidence"] intValue];
-		NSLog(@"activity.type  %@", payload[@"type"]);
-		NSLog(@"activity.confidence  %i", confidence);
-		NSDictionary* conf = [self getConf];
-		if(conf != nil){
-			int minConfidence = [conf[@"activity"][@"confidence"] intValue];
-			if(confidence >= minConfidence && [payload[@"type"] compare:lastActivity] != NSOrderedSame) {
-				lastActivity = payload[@"type"];
-				[self crunchEvent:@"activity" payload:payload];
-				if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && motionToSend.stationary) {
-					[self.stillLocationManager startUpdatingLocation];
-				}
-			}
+	if(maxConfidence > 100) {
+		maxConfidence = 100;
+	}
+	int minConfidence = [conf[@"activity"][@"confidence"] intValue];
+	NSLog(@"candidate %@", candidate);
+	NSLog(@"maxConfidence %i", maxConfidence);
+	NSLog(@"minConfidence %i", minConfidence);
+	NSLog(@"lastActivity %@", lastActivity);
+	if(candidate != nil && [candidate compare:lastActivity] != NSOrderedSame && maxConfidence >= minConfidence) {
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		[payload setObject:candidate forKey:@"type"];
+		[payload setObject:[NSNumber numberWithInt:maxConfidence] forKey:@"confidence"];
+		lastActivity = candidate;
+		[self crunchEvent:@"activity" payload:payload];
+		if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && [candidate compare:@"still"] == NSOrderedSame) {
+			[self.stillLocationManager startUpdatingLocation];
 		}
 	}
+}
+
+-(int)activityConfidence:(CMMotionActivity*)activity {
+	if(activity.confidence == CMMotionActivityConfidenceLow) {
+		return 25;
+	} else if(activity.confidence == CMMotionActivityConfidenceMedium) {
+		return 50;
+	} else if(activity.confidence == CMMotionActivityConfidenceHigh) {
+		return 100;
+	}
+	return 0;
+}
+
+-(NSString*)activityType:(CMMotionActivity*) activity {
+	if(activity.stationary) {
+		return @"still";
+	} else if(activity.walking) {
+		return @"walk";
+	} else if(activity.running) {
+		return @"run";
+	} else if(activity.cycling) {
+		return @"bicycle";
+	} else if(activity.automotive) {
+		return @"car";
+	}
+	return nil;
 }
 
 -(void)setup:(NSDictionary*)settings {
@@ -544,8 +533,11 @@
 	long t = [[NSDate date] timeIntervalSince1970];
 	if(eventWebView != nil && t - eventWebViewSynchTime > (60*60*8)){
 		[eventWebView synch];
-		eventWebViewSynchTime = t;
 	}
+}
+
+-(void)eventWebViewSynched {
+	eventWebViewSynchTime = [[NSDate date] timeIntervalSince1970];
 }
 
 -(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {

@@ -26,6 +26,9 @@
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}
 	if(body[@"what"] != nil) {
+		if([@"init" compare:body[@"synched"]] == NSOrderedSame) {
+			[nsr eventWebViewSynched];
+		}
 		if([@"init" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(authorized){

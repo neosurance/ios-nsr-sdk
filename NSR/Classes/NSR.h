@@ -70,4 +70,6 @@
 -(void)registerWebView:(NSRControllerWebView*)controllerWebView;
 -(void)clearWebView;
 
+-(void)eventWebViewSynched;
+
 @end
