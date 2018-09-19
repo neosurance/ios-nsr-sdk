@@ -22,6 +22,9 @@
 	if(body[@"event"] != nil && body[@"payload"] != nil) {
 		[nsr sendEvent:body[@"event"] payload:body[@"payload"]];
 	}
+	if(body[@"archiveEvent"] != nil && body[@"payload"] != nil) {
+		[nsr archiveEvent:body[@"archiveEvent"] payload:body[@"payload"]];
+	}
 	if(body[@"action"] != nil) {
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}

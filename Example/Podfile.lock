@@ -14,7 +14,7 @@ PODS:
   - AFNetworking/Serialization (3.2.1)
   - AFNetworking/UIKit (3.2.1):
     - AFNetworking/NSURLSession
-  - NSR (2.0.0):
+  - NSR (2.1.0):
     - AFNetworking
 
 DEPENDENCIES:
@@ -30,7 +30,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
-  NSR: 63963f5b58c25e2a748387f39c3465ecdeb1ff91
+  NSR: b769bcd65f181f03bc58072618ac9bb5c78510c2
 
 PODFILE CHECKSUM: 5cac096783b4577d5ce4cf92957f0d7dc0cf7e7a
 

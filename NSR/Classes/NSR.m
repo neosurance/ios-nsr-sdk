@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.0.6";
+	return @"2.1.0";
 }
 
 -(NSString*)os {
@@ -30,35 +30,16 @@
 		self.pushPlayer.volume = 1;
 		self.pushPlayer.numberOfLoops = 0;
 		
-		self.significantLocationManager = [[CLLocationManager alloc] init];
-		[self.significantLocationManager setAllowsBackgroundLocationUpdates:YES];
-		[self.significantLocationManager setPausesLocationUpdatesAutomatically:NO];
-		self.significantLocationManager.delegate = self;
-		[self.significantLocationManager requestAlwaysAuthorization];
-		
-		self.stillLocationManager = [[CLLocationManager alloc] init];
-		[self.stillLocationManager setAllowsBackgroundLocationUpdates:YES];
-		[self.stillLocationManager setPausesLocationUpdatesAutomatically:NO];
-		[self.stillLocationManager setDistanceFilter:kCLDistanceFilterNone];
-		[self.stillLocationManager setDesiredAccuracy:kCLLocationAccuracyBest];
-		[self.stillLocationManager requestAlwaysAuthorization];
-		
-		self.motionActivityManager = [[CMMotionActivityManager alloc] init];
-		self.motionActivities = [[NSMutableArray alloc] init];
-		activityInited = NO;
-		
-		[[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
-			[self traceConnection:status];
-		}];
+		self.stillLocationManager = nil;
+		self.significantLocationManager = nil;
 		
 		stillLocationSent = NO;
 		controllerWebView = nil;
 		eventWebView = nil;
-		lastConnection = nil;
-		lastPower = nil;
-		lastActivity = nil;
+		
 		eventWebViewSynchTime = 0;
 		setupInited = NO;
+		activityInited = NO;
 	}
 	return self;
 }
@@ -67,91 +48,84 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
-	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
-	[self.significantLocationManager stopMonitoringSignificantLocationChanges];
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(tracePower) object: nil];
-	if(activityInited) {
-		[self.motionActivityManager stopActivityUpdates];
+	[self stopTraceLocation];
+	[self stopTraceActivity];
+	[self stopTraceConnection];
+	[self stopTracePower];
+	NSDictionary* conf = [self getConf];
+	if (conf != nil && eventWebView == nil && [conf[@"local_tracking"] boolValue]) {
+		NSLog(@"Making NSREventWebView");
+		eventWebView = [[NSREventWebView alloc] init];
+	}
+	[self traceLocation];
+	[self traceActivity];
+	[self traceConnection];
+	[self tracePower];
+}
+
+-(void)initStillLocation {
+	if(self.stillLocationManager == nil) {
+		NSLog(@"initStillLocation");
+		self.stillLocationManager = [[CLLocationManager alloc] init];
+		[self.stillLocationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.stillLocationManager setPausesLocationUpdatesAutomatically:NO];
+		[self.stillLocationManager setDistanceFilter:kCLDistanceFilterNone];
+		[self.stillLocationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		[self.stillLocationManager requestAlwaysAuthorization];
+	}
+}
+
+-(void)initLocation {
+	if(self.significantLocationManager == nil) {
+		NSLog(@"initLocation");
+		self.significantLocationManager = [[CLLocationManager alloc] init];
+		[self.significantLocationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.significantLocationManager setPausesLocationUpdatesAutomatically:NO];
+		self.significantLocationManager.delegate = self;
+		[self.significantLocationManager requestAlwaysAuthorization];
+	}
+}
+
+-(void)traceLocation {
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+		[self initLocation];
+		[self.significantLocationManager startMonitoringSignificantLocationChanges];
+	}
+}
+
+-(void)stopTraceLocation {
+	NSLog(@"stopTraceLocation");
+	if(self.significantLocationManager != nil){
+		[self.significantLocationManager stopMonitoringSignificantLocationChanges];
+	}
+}
+
+-(void)initActivity {
+	if(self.motionActivityManager == nil){
+		NSLog(@"initActivity");
+		self.motionActivityManager = [[CMMotionActivityManager alloc] init];
+		self.motionActivities = [[NSMutableArray alloc] init];
 		activityInited = NO;
 	}
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
-	NSDictionary* conf = [self getConf];
-	if(conf != nil){
-		if (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]) {
-			NSLog(@"Making NSREventWebView");
-			eventWebView = [[NSREventWebView alloc] init];
-		}
-		
-		if([conf[@"connection"][@"enabled"] boolValue]) {
-			[[AFNetworkReachabilityManager sharedManager] startMonitoring];
-		}
-		if([conf[@"power"][@"enabled"] boolValue]) {
-			[self tracePower];
-		}
-		if([conf[@"activity"][@"enabled"] boolValue]) {
-			[self.motionActivityManager startActivityUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMMotionActivity* activity) {
-				[self traceActivity:activity];
-			}];
-			activityInited = YES;
-		}
-		if([conf[@"position"][@"enabled"] boolValue]) {
-			[self.significantLocationManager startMonitoringSignificantLocationChanges];
-		}
-	}
 }
 
--(void)tracePower {
+-(void)traceActivity {
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"power"][@"enabled"] boolValue]) {
-		UIDevice* currentDevice = [UIDevice currentDevice];
-		[currentDevice setBatteryMonitoringEnabled:YES];
-		UIDeviceBatteryState batteryState = [currentDevice batteryState];
-		int batteryLevel = (int)([currentDevice batteryLevel]*100);
-		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-		[payload setObject:[NSNumber numberWithInteger: batteryLevel] forKey:@"level"];
-		if(batteryState == UIDeviceBatteryStateUnplugged) {
-			[payload setObject:@"unplugged" forKey:@"type"];
-		} else {
-			[payload setObject:@"plugged" forKey:@"type"];
-		}
-		if([payload[@"type"] compare:lastPower] != NSOrderedSame || abs(batteryLevel - lastPowerLevel) > 5) {
-			lastPower = payload[@"type"];
-			lastPowerLevel = batteryLevel;
-			[self crunchEvent:@"power" payload:payload];
-		}
-		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
+	if(conf != nil && [conf[@"activity"][@"enabled"] boolValue]) {
+		[self initActivity];
+		[self.motionActivityManager startActivityUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMMotionActivity* activity) {
+			NSLog(@"traceActivity IN");
+			[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+			[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 8];
+			if([self.motionActivities count] == 0) {
+				[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+				[self performSelector:@selector(recoveryActivity) withObject: nil afterDelay: 16];
+			}
+			[self.motionActivities addObject:activity];
+		}];
+		activityInited = YES;
 	}
-}
-
--(void)traceConnection:(AFNetworkReachabilityStatus)status {
-	NSDictionary* conf = [self getConf];
-	if(conf !=nil && [conf[@"connection"][@"enabled"] boolValue]) {
-		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-		NSString* connection = nil;
-		if (status == AFNetworkReachabilityStatusReachableViaWiFi) {
-			connection = @"wi-fi";
-		} else if (status == AFNetworkReachabilityStatusReachableViaWWAN) {
-			connection = @"mobile";
-		}
-		if(connection != nil && [connection compare:lastConnection] != NSOrderedSame) {
-			[payload setObject:connection forKey:@"type"];
-			[self crunchEvent:@"connection" payload:payload];
-			lastConnection = connection;
-		}
-		NSLog(@"traceConnection: %@",connection);
-	}
-}
-
--(void)traceActivity:(CMMotionActivity*) activity {
-	NSLog(@"traceActivity IN");
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
-	[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 8];
-	if([self.motionActivities count] == 0) {
-		[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-		[self performSelector:@selector(recoveryActivity) withObject: nil afterDelay: 16];
-	}
-	[self.motionActivities addObject:activity];
 }
 
 -(void)sendActivity {
@@ -197,14 +171,15 @@
 	NSLog(@"candidate %@", candidate);
 	NSLog(@"maxConfidence %i", maxConfidence);
 	NSLog(@"minConfidence %i", minConfidence);
-	NSLog(@"lastActivity %@", lastActivity);
-	if(candidate != nil && [candidate compare:lastActivity] != NSOrderedSame && maxConfidence >= minConfidence) {
+	NSLog(@"lastActivity %@", [self getLastActivity]);
+	if(candidate != nil && [candidate compare:[self getLastActivity]] != NSOrderedSame && maxConfidence >= minConfidence) {
 		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 		[payload setObject:candidate forKey:@"type"];
 		[payload setObject:[NSNumber numberWithInt:maxConfidence] forKey:@"confidence"];
-		lastActivity = candidate;
+		[self setLastActivity:candidate];
 		[self crunchEvent:@"activity" payload:payload];
 		if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && [candidate compare:@"still"] == NSOrderedSame) {
+			[self initStillLocation];
 			[self.stillLocationManager startUpdatingLocation];
 		}
 	}
@@ -234,6 +209,113 @@
 		return @"car";
 	}
 	return nil;
+}
+
+-(void)stopTraceActivity {
+	NSLog(@"stopTraceActivity");
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
+	if(self.motionActivityManager != nil && activityInited) {
+		[self.motionActivityManager stopActivityUpdates];
+		activityInited = NO;
+	}
+}
+
+-(void)setLastActivity:(NSString*) lastActivity {
+	[[NSUserDefaults standardUserDefaults] setObject:lastActivity forKey:@"NSR_lastActivity"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSString*)getLastActivity {
+	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_lastActivity"];
+}
+
+-(void)traceConnection {
+	NSDictionary* conf = [self getConf];
+	if(conf !=nil && [conf[@"connection"][@"enabled"] boolValue]) {
+		[[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
+			NSLog(@"traceConnection IN");
+			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+			NSString* connection = nil;
+			if (status == AFNetworkReachabilityStatusReachableViaWiFi) {
+				connection = @"wi-fi";
+			} else if (status == AFNetworkReachabilityStatusReachableViaWWAN) {
+				connection = @"mobile";
+			}
+			if(connection != nil && [connection compare:[self getLastConnection]] != NSOrderedSame) {
+				[payload setObject:connection forKey:@"type"];
+				[self crunchEvent:@"connection" payload:payload];
+				[self setLastConnection:connection];
+			}
+			NSLog(@"traceConnection: %@",connection);
+		}];
+		[[AFNetworkReachabilityManager sharedManager] startMonitoring];
+	}
+}
+
+-(void)stopTraceConnection {
+	NSLog(@"stopTraceConnection");
+	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
+}
+
+-(void)setLastConnection:(NSString*) lastConnection {
+	[[NSUserDefaults standardUserDefaults] setObject:lastConnection forKey:@"NSR_lastConnection"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSString*)getLastConnection {
+	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_lastConnection"];
+}
+
+-(void)tracePower {
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"power"][@"enabled"] boolValue]) {
+		UIDevice* currentDevice = [UIDevice currentDevice];
+		[currentDevice setBatteryMonitoringEnabled:YES];
+		UIDeviceBatteryState batteryState = [currentDevice batteryState];
+		int batteryLevel = (int)([currentDevice batteryLevel]*100);
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		[payload setObject:[NSNumber numberWithInteger: batteryLevel] forKey:@"level"];
+		if(batteryState == UIDeviceBatteryStateUnplugged) {
+			[payload setObject:@"unplugged" forKey:@"type"];
+		} else {
+			[payload setObject:@"plugged" forKey:@"type"];
+		}
+		if([payload[@"type"] compare:[self getLastPower]] != NSOrderedSame || abs(batteryLevel - [self getLastPowerLevel]) > 5) {
+			[self setLastPower:payload[@"type"]];
+			[self setLastPowerLevel:batteryLevel];
+			[self crunchEvent:@"power" payload:payload];
+		}
+		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
+	}
+}
+
+-(void)stopTracePower {
+	NSLog(@"stopTracePower");
+	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(tracePower) object: nil];
+}
+
+-(void)setLastPower:(NSString*) lastPower {
+	[[NSUserDefaults standardUserDefaults] setObject:lastPower forKey:@"NSR_lastPower"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSString*)getLastPower {
+	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_lastPower"];
+}
+
+-(void)setLastPowerLevel:(int) lastPowerLevel {
+	[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:lastPowerLevel] forKey:@"NSR_lastPowerLevel"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(int)getLastPowerLevel {
+	NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_lastPowerLevel"];
+	if(n != nil) {
+		return [n intValue];
+	}else{
+		return 0;
+	}
 }
 
 -(void)setup:(NSDictionary*)settings {
@@ -280,83 +362,38 @@
 	[self setUser:user];
 	
 	[self authorize:^(BOOL authorized) {
-		if(authorized){
-			NSLog(@"registerUser authorized");
-		} else {
-			NSLog(@"registerUser not authorized");
-		}
-	}];
-}
-
--(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
-	NSDictionary* conf = [self getConf];
-	if (conf != nil && conf[@"local_tracking"] != nil && [conf[@"local_tracking"] boolValue]) {
-		NSLog(@"crunchEvent event %@", event);
-		NSLog(@"crunchEvent payload %@", payload);
-		if (eventWebView != nil) {
-			[eventWebView crunchEvent:event payload:payload];
-		}
-	} else {
-		[self sendEvent:event payload:payload];
-	}
-}
-
--(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
-	if([self gracefulDegradate]) {
-		return;
-	}
-	NSLog(@"sendEvent event %@", event);
-	NSLog(@"sendEvent payload %@", payload);
-	
-	[self authorize:^(BOOL authorized) {
-		if(!authorized){
-			return;
-		}
-		
-		NSMutableDictionary* eventPayload = [[NSMutableDictionary alloc] init];
-		[eventPayload setObject:event forKey:@"event"];
-		[eventPayload setObject:payload forKey:@"payload"];
-		[eventPayload setObject:[[NSTimeZone localTimeZone] name] forKey:@"timezone"];
-		[eventPayload setObject:[NSNumber numberWithLong:([[NSDate date] timeIntervalSince1970]*1000)] forKey:@"event_time"];
-		
-		NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
-		[devicePayLoad setObject:[self uuid] forKey:@"uid"];
-		NSString* pushToken = [self getPushToken];
-		if(pushToken != nil) {
-			[devicePayLoad setObject:pushToken forKey:@"push_token"];
-		}
-		[devicePayLoad setObject:[self os] forKey:@"os"];
-		[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
-		struct utsname systemInfo;
-		uname(&systemInfo);
-		[devicePayLoad setObject:[NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding] forKey:@"model"];
-		
-		NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
-		[requestPayload setObject:eventPayload forKey:@"event"];
-		[requestPayload setObject:[[self getUser] toDict:NO] forKey:@"user"];
-		[requestPayload setObject:devicePayLoad forKey:@"device"];
-		
-		NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
-		[headers setObject:[self getToken] forKey:@"ns_token"];
-		[headers setObject:[self getLang] forKey:@"ns_lang"];
-		
-		[self.securityDelegate secureRequest:@"event" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
-			if (error == nil) {
-				BOOL skipPush = (responseObject[@"skipPush"] != nil && [responseObject[@"skipPush"] boolValue]);
-				NSArray* pushes = responseObject[@"pushes"];
-				if(!skipPush) {
-					if([pushes count] > 0){
-						[self showPush: pushes[0]];
-					}
-				} else {
-					if([pushes count] > 0){
-						[self showUrl: pushes[0][@"url"]];
-					}
-				}
-			} else {
-				NSLog(@"sendEvent %@", error);
+		NSLog(@"registerUser %@authorized", authorized?@"":@"not ");
+		if(authorized && [[self getConf][@"send_user"] boolValue]){
+			NSLog(@"sendUser");
+			NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
+			[devicePayLoad setObject:[self uuid] forKey:@"uid"];
+			NSString* pushToken = [self getPushToken];
+			if(pushToken != nil) {
+				[devicePayLoad setObject:pushToken forKey:@"push_token"];
 			}
-		}];
+			[devicePayLoad setObject:[self os] forKey:@"os"];
+			[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
+			struct utsname systemInfo;
+			uname(&systemInfo);
+			[devicePayLoad setObject:[NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding] forKey:@"model"];
+			
+			NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
+			[requestPayload setObject:[[self getUser] toDict:NO] forKey:@"user"];
+			[requestPayload setObject:devicePayLoad forKey:@"device"];
+			if([[self getConf][@"send_snapshot"] boolValue]) {
+				[requestPayload setObject:[self snapshot] forKey:@"snapshot"];
+			}
+			
+			NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
+			[headers setObject:[self getToken] forKey:@"ns_token"];
+			[headers setObject:[self getLang] forKey:@"ns_lang"];
+	
+			[self.securityDelegate secureRequest:@"registerUser" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
+				if (error != nil) {
+					NSLog(@"sendUser %@", error);
+				}
+			}];
+		}
 	}];
 }
 
@@ -390,8 +427,124 @@
 			} else {
 				NSLog(@"sendAction %@", error);
 			}
+		}];
+	}];
+}
+
+-(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
+	NSDictionary* conf = [self getConf];
+	if (conf != nil && conf[@"local_tracking"] != nil && [conf[@"local_tracking"] boolValue]) {
+		NSLog(@"crunchEvent event %@", event);
+		NSLog(@"crunchEvent payload %@", payload);
+		[self snapshot:event payload:payload];
+		if (eventWebView != nil) {
+			[eventWebView crunchEvent:event payload:payload];
 		}
-		 ];
+	} else {
+		[self sendEvent:event payload:payload];
+	}
+}
+
+-(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
+	if([self gracefulDegradate]) {
+		return;
+	}
+	NSLog(@"sendEvent event %@", event);
+	NSLog(@"sendEvent payload %@", payload);
+	
+	[self authorize:^(BOOL authorized) {
+		if(!authorized){
+			return;
+		}
+		[self snapshot:event payload:payload];
+		NSMutableDictionary* eventPayload = [[NSMutableDictionary alloc] init];
+		[eventPayload setObject:event forKey:@"event"];
+		[eventPayload setObject:[[NSTimeZone localTimeZone] name] forKey:@"timezone"];
+		[eventPayload setObject:[NSNumber numberWithLong:([[NSDate date] timeIntervalSince1970]*1000)] forKey:@"event_time"];
+		[eventPayload setObject:payload forKey:@"payload"];
+
+		NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
+		[devicePayLoad setObject:[self uuid] forKey:@"uid"];
+		NSString* pushToken = [self getPushToken];
+		if(pushToken != nil) {
+			[devicePayLoad setObject:pushToken forKey:@"push_token"];
+		}
+		[devicePayLoad setObject:[self os] forKey:@"os"];
+		[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
+		struct utsname systemInfo;
+		uname(&systemInfo);
+		[devicePayLoad setObject:[NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding] forKey:@"model"];
+		
+		NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
+		[requestPayload setObject:eventPayload forKey:@"event"];
+		[requestPayload setObject:[[self getUser] toDict:NO] forKey:@"user"];
+		[requestPayload setObject:devicePayLoad forKey:@"device"];
+		if([[self getConf][@"send_snapshot"] boolValue]) {
+			[requestPayload setObject:[self snapshot] forKey:@"snapshot"];
+		}
+		
+		NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
+		[headers setObject:[self getToken] forKey:@"ns_token"];
+		[headers setObject:[self getLang] forKey:@"ns_lang"];
+		
+		[self.securityDelegate secureRequest:@"event" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
+			if (error == nil) {
+				BOOL skipPush = (responseObject[@"skipPush"] != nil && [responseObject[@"skipPush"] boolValue]);
+				NSArray* pushes = responseObject[@"pushes"];
+				if(!skipPush) {
+					if([pushes count] > 0){
+						[self showPush: pushes[0]];
+					}
+				} else {
+					if([pushes count] > 0){
+						[self showUrl: pushes[0][@"url"]];
+					}
+				}
+			} else {
+				NSLog(@"sendEvent %@", error);
+			}
+		}];
+	}];
+}
+
+-(void)archiveEvent:(NSString *)event payload:(NSDictionary *)payload {
+	if([self gracefulDegradate]) {
+		return;
+	}
+	NSLog(@"archiveEvent event %@", event);
+	NSLog(@"archiveEvent payload %@", payload);
+	
+	[self authorize:^(BOOL authorized) {
+		if(!authorized){
+			return;
+		}
+		NSMutableDictionary* eventPayload = [[NSMutableDictionary alloc] init];
+		[eventPayload setObject:event forKey:@"event"];
+		[eventPayload setObject:[[NSTimeZone localTimeZone] name] forKey:@"timezone"];
+		[eventPayload setObject:[NSNumber numberWithLong:([[NSDate date] timeIntervalSince1970]*1000)] forKey:@"event_time"];
+		[eventPayload setObject:[[NSDictionary alloc] init] forKey:@"payload"];
+
+		NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
+		[devicePayLoad setObject:[self uuid] forKey:@"uid"];
+
+		NSMutableDictionary* userPayLoad = [[NSMutableDictionary alloc] init];
+		[userPayLoad setObject:[[self getUser] code] forKey:@"code"];
+
+		NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
+		[requestPayload setObject:eventPayload forKey:@"event"];
+		[requestPayload setObject:userPayLoad forKey:@"user"];
+		[requestPayload setObject:devicePayLoad forKey:@"device"];
+		[requestPayload setObject:[self snapshot:event payload:payload] forKey:@"snapshot"];
+		
+		NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
+		[headers setObject:[self getToken] forKey:@"ns_token"];
+		[headers setObject:[self getLang] forKey:@"ns_lang"];
+		
+		[self.securityDelegate secureRequest:@"archiveEvent" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
+			if (error != nil) {
+				NSLog(@"sendEvent %@", error);
+			}
+		}];
 	}];
 }
 
@@ -486,6 +639,22 @@
 
 -(NSString*)getAppUrl {
 	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_appUrl"];
+}
+
+-(NSMutableDictionary*)snapshot:(NSString*) event payload:(NSDictionary*)payload {
+	NSMutableDictionary* snapshot = [self snapshot];
+	[snapshot setValue:payload forKey:event];
+	[[NSUserDefaults standardUserDefaults] setObject:snapshot forKey:@"NSR_snapshot"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+	return snapshot;
+}
+
+-(NSMutableDictionary*)snapshot {
+	NSDictionary* snapshot = [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_snapshot"];
+	if(snapshot != nil) {
+		return [[NSMutableDictionary alloc] initWithDictionary:snapshot];
+	}
+	return [[NSMutableDictionary alloc] init];
 }
 
 -(void)authorize:(void (^)(BOOL authorized))completionHandler {
@@ -686,8 +855,9 @@
 		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
 		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
-		stillLocationSent = (manager == self.stillLocationManager);
+		[payload setObject:[NSNumber numberWithFloat:newLocation.altitude] forKey:@"altitude"];
 		[self crunchEvent:@"position" payload:payload];
+		stillLocationSent = (manager == self.stillLocationManager);
 	}
 	NSLog(@"didUpdateToLocation exit");
 }

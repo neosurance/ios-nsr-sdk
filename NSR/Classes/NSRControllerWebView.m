@@ -42,7 +42,10 @@
 		[nsr sendEvent:body[@"event"] payload:body[@"payload"]];
 	}
 	if(body[@"crunchEvent"] != nil && body[@"payload"] != nil) {
-		[nsr crunchEvent:body[@"event"] payload:body[@"payload"]];
+		[nsr crunchEvent:body[@"crunchEvent"] payload:body[@"payload"]];
+	}
+	if(body[@"archiveEvent"] != nil && body[@"payload"] != nil) {
+		[nsr archiveEvent:body[@"archiveEvent"] payload:body[@"payload"]];
 	}
 	if(body[@"action"] != nil) {
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
@@ -144,20 +147,19 @@
 		[self setPhotoCallBack:nil];
 	}];
 }
+
 -(void)getLocation:(NSString*)callBack {
-	if([CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorizedWhenInUse || [CLLocationManager authorizationStatus] == kCLAuthorizationStatusAuthorizedAlways){
-		if(self.locationManager == nil){
-			self.locationManager = [[CLLocationManager alloc] init];
-			[self.locationManager setAllowsBackgroundLocationUpdates:YES];
-			[self.locationManager setPausesLocationUpdatesAutomatically:NO];
-			[self.locationManager setDistanceFilter:kCLDistanceFilterNone];
-			[self.locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
-			self.locationManager.delegate = self;
-			[self.locationManager requestAlwaysAuthorization];
-		}
-		[self setLocationCallBack:callBack];
-		[self.locationManager startUpdatingLocation];
+	if(self.locationManager == nil){
+		self.locationManager = [[CLLocationManager alloc] init];
+		[self.locationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.locationManager setPausesLocationUpdatesAutomatically:NO];
+		[self.locationManager setDistanceFilter:kCLDistanceFilterNone];
+		[self.locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		self.locationManager.delegate = self;
+		[self.locationManager requestAlwaysAuthorization];
 	}
+	[self setLocationCallBack:callBack];
+	[self.locationManager startUpdatingLocation];
 }
 
 -(void)locationManager:(CLLocationManager*)manager didUpdateLocations:(NSArray *)locations {
@@ -166,7 +168,7 @@
 		[manager stopUpdatingLocation];
 		if(self.locationCallBack != nil){
 			CLLocation* loc = [locations lastObject];
-			[self eval:[NSString stringWithFormat:@"%@({latitude:%f,longitude:%f})", self.locationCallBack, loc.coordinate.latitude, loc.coordinate.longitude]];
+			[self eval:[NSString stringWithFormat:@"%@({latitude:%f,longitude:%f,altitude:%f})", self.locationCallBack, loc.coordinate.latitude, loc.coordinate.longitude, loc.altitude]];
 			[self setLocationCallBack:nil];
 		}
 	}

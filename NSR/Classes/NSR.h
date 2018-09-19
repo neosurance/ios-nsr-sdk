@@ -23,10 +23,6 @@
 	NSRControllerWebView* controllerWebView;
 	NSREventWebView* eventWebView;
 	long eventWebViewSynchTime;
-	NSString* lastConnection;
-	NSString* lastPower;
-	int lastPowerLevel;
-	NSString* lastActivity;
 	BOOL activityInited;
 	BOOL stillLocationSent;
 	BOOL setupInited;
@@ -52,6 +48,7 @@
 -(void)showUrl:(NSString*)url params:(NSDictionary*)params;
 -(void)sendEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
+-(void)archiveEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
 -(void)showPush:(NSDictionary*)push;
 -(BOOL)forwardNotification:(UNNotificationResponse*) response withCompletionHandler:(void(^)(void))completionHandler API_AVAILABLE(ios(10.0));
