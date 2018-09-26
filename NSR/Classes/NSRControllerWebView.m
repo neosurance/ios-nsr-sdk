@@ -103,6 +103,21 @@
 				}];
 			}];
 		}
+		if([@"geoCode" compare:body[@"what"]] == NSOrderedSame && body[@"location"] != nil && body[@"callBack"] != nil) {
+			CLGeocoder* geocoder = [[CLGeocoder alloc] init];
+			CLLocation* location = [[CLLocation alloc] initWithLatitude:[body[@"location"][@"latitude"] doubleValue] longitude:[body[@"location"][@"longitude"] doubleValue]];
+			[geocoder reverseGeocodeLocation:location completionHandler:^(NSArray* placemarks, NSError* error){
+				if(placemarks != nil && [placemarks count] > 0) {
+					CLPlacemark* placemark= placemarks[0];
+					NSMutableDictionary* address = [[NSMutableDictionary alloc] init];
+					[address setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+					[address setObject:[placemark country] forKey:@"countryName"];
+					NSString* addressString = [[placemark addressDictionary][@"FormattedAddressLines"] componentsJoinedByString:@", "];
+					[address setObject:addressString forKey:@"address"];
+					[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:address]]];
+				}
+			}];
+		}
 		if(nsr.workflowDelegate != nil && [@"executeLogin" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr.workflowDelegate executeLogin:self.webView.URL.absoluteString]?@"true":@"false"]];
 		}
