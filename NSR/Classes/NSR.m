@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.1";
+	return @"2.1.2";
 }
 
 -(NSString*)os {
@@ -380,15 +380,12 @@
 			NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
 			[requestPayload setObject:[[self getUser] toDict:NO] forKey:@"user"];
 			[requestPayload setObject:devicePayLoad forKey:@"device"];
-			if([[self getConf][@"send_snapshot"] boolValue]) {
-				[requestPayload setObject:[self snapshot] forKey:@"snapshot"];
-			}
 			
 			NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
 			[headers setObject:[self getToken] forKey:@"ns_token"];
 			[headers setObject:[self getLang] forKey:@"ns_lang"];
 	
-			[self.securityDelegate secureRequest:@"registerUser" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
+			[self.securityDelegate secureRequest:@"register" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
 				if (error != nil) {
 					NSLog(@"sendUser %@", error);
 				}

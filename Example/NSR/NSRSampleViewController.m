@@ -39,12 +39,12 @@
 
 - (IBAction)setup:(UIButton *)sender {
 	NSLog(@"Setup");
-//	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
-//	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-//	[settings setObject:@"ing" forKey:@"code"];
-//	[settings setObject:@"uBc4dyQeqp7miIAfis" forKey:@"secret_key"];
-//	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
-//	[[NSR sharedInstance] setup:settings];
+	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
+	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
+	[settings setObject:@"poste" forKey:@"code"];
+	[settings setObject:@"Mxw5H4RWwzrpeacWyu" forKey:@"secret_key"];
+	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
+	[[NSR sharedInstance] setup:settings];
 }
 
 -(UIStatusBarStyle) preferredStatusBarStyle{

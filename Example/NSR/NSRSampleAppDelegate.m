@@ -15,8 +15,8 @@
 	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
 	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-	[settings setObject:@"bikevo" forKey:@"code"];
-	[settings setObject:@"uIMM9gQ5e1BDaUKtLP" forKey:@"secret_key"];
+	[settings setObject:@"poste" forKey:@"code"];
+	[settings setObject:@"Mxw5H4RWwzrpeacWyu" forKey:@"secret_key"];
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
 	
 	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
