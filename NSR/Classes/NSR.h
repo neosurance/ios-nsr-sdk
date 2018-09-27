@@ -51,7 +51,7 @@
 -(void)archiveEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
 -(void)showPush:(NSDictionary*)push;
--(BOOL)forwardNotification:(UNNotificationResponse*) response withCompletionHandler:(void(^)(void))completionHandler API_AVAILABLE(ios(10.0));
+-(BOOL)forwardNotification:(UNNotificationResponse*) response API_AVAILABLE(ios(10.0));
 
 -(NSDictionary*)getSettings;
 -(NSString*)getLang;

@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.2";
+	return @"2.1.3";
 }
 
 -(NSString*)os {
@@ -545,7 +545,7 @@
 	}];
 }
 
--(BOOL)forwardNotification:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler {
+-(BOOL)forwardNotification:(UNNotificationResponse *)response {
 	if (@available(iOS 10.0, *)) {
 		NSDictionary* userInfo = response.notification.request.content.userInfo;
 		if(userInfo != nil && [@"NSR" isEqualToString:userInfo[@"provider"]]) {

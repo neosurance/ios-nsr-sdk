@@ -25,7 +25,7 @@
 
 -(void)viewDidLoad {
 	[super viewDidLoad];
-	[self performSelector:@selector(checkBody) withObject:nil afterDelay:5];
+	[self performSelector:@selector(checkBody) withObject:nil afterDelay:15];
 }
 
 -(void)navigate:(NSString*) url {
@@ -210,7 +210,7 @@
 		if(![result isEqualToString:@"NSR"]) {
 			[self close];
 		} else {
-			[self performSelector:@selector(checkBody) withObject:nil afterDelay:5];
+			[self performSelector:@selector(checkBody) withObject:nil afterDelay:15];
 		}
 	}];
 }

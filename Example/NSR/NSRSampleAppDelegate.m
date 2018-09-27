@@ -1,6 +1,5 @@
 #import "NSRSampleAppDelegate.h"
 #import "NSRSampleViewController.h"
-#import "NSRSampleWFDelegate.h"
 #import <NSR/NSR.h>
 
 @implementation NSRSampleAppDelegate
@@ -12,18 +11,6 @@
 	UNAuthorizationOptions options = UNAuthorizationOptionAlert + UNAuthorizationOptionSound;
 	[center requestAuthorizationWithOptions:options completionHandler:^(BOOL granted, NSError* _Nullable error) {}];
 	
-	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
-	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
-	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-	[settings setObject:@"poste" forKey:@"code"];
-	[settings setObject:@"Mxw5H4RWwzrpeacWyu" forKey:@"secret_key"];
-	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
-	
-	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
-	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
-
-	[[NSR sharedInstance] setup:settings];
-	
 	return YES;
 }
 
@@ -32,7 +19,11 @@
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler  {
-	if(![[NSR sharedInstance] forwardNotification:response withCompletionHandler:(void(^)(void))completionHandler]) {
+	NSDictionary* userInfo = response.notification.request.content.userInfo;
+	NSLog(@">>> code %@",userInfo[@"code"]);
+	NSLog(@">>> expirationTime %@",userInfo[@"expirationTime"]);
+
+	if(![[NSR sharedInstance] forwardNotification:response]) {
 		//TODO: handle your notification
 	}
 	completionHandler();
