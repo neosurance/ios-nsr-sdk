@@ -76,6 +76,14 @@
 				}
 			}];
 		}
+		if ([@"store" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"data"] != nil) {
+			[[NSUserDefaults standardUserDefaults] setObject:body[@"data"] forKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
+			[[NSUserDefaults standardUserDefaults] synchronize];
+		}
+		if ([@"retrive" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"callBack"] != nil) {
+			NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
+			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
+		}
 		if([@"callApi" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(!authorized){
@@ -100,11 +108,18 @@
 				}];
 			}];
 		}
+		if(nsr.workflowDelegate != nil && [@"executeLogin" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr.workflowDelegate executeLogin:@""]?@"true":@"false"]];
+		}
 	}
 }
 
 -(void) synch {
 	[self eval:@"synch()"];
+}
+
+-(void) reset {
+	[self eval:@"localStorage.clear();synch()"];
 }
 
 -(void) crunchEvent:(NSString*)event payload:(NSDictionary*)payload {

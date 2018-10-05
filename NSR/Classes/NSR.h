@@ -26,6 +26,7 @@
 	BOOL activityInited;
 	BOOL stillLocationSent;
 	BOOL setupInited;
+	double pushdelay;
 }
 @property(nonatomic, strong) CLLocationManager* significantLocationManager;
 @property(nonatomic, strong) CLLocationManager* stillLocationManager;
@@ -68,5 +69,8 @@
 -(void)clearWebView;
 
 -(void)eventWebViewSynched;
+-(void)resetCruncher;
+
+-(void)setPushDelay:(double) t;
 
 @end

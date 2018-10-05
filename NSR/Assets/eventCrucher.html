@@ -13,12 +13,6 @@
 		}
 	}
 
-	function getParameter(name) {
-		name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]")
-		var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"), results = regex.exec(location.search)
-		return results == null ? null : decodeURIComponent(results[1].replace(/\+/g, " "))
-	}
-
 	function init() {
 		NSRPostMsg({
 			what : 'init',
@@ -54,14 +48,12 @@
 			console.log('refresh chains!')
 			localStorage.setItem("nsr_chainstime", res.chains_time)
 			localStorage.setItem("nsr_chains", res.chains)
+			window.eval(res.chains)
 		}
-		window.eval(localStorage.getItem("nsr_chains"))
 		NSRPostMsg({what : 'synched'})
 	}
 
 	init()
 </script>
 </head>
-<body>
-</body>
 </html>

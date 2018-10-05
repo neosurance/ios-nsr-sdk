@@ -6,6 +6,7 @@
 @property(strong, nonatomic) WKWebViewConfiguration* webConfiguration;
 
 -(void)synch;
+-(void)reset;
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 
 @end

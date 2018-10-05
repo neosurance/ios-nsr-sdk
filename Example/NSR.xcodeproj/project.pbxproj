@@ -19,7 +19,7 @@
 		6003F5A9195388D20070C39A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5A8195388D20070C39A /* Images.xcassets */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
-		ACC62A8C2126F65A009B634A /* NSR_push.wav in Resources */ = {isa = PBXBuildFile; fileRef = ACC62A8B2126F659009B634A /* NSR_push.wav */; };
+		AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */ = {isa = PBXBuildFile; fileRef = ACC62A8B2126F659009B634A /* NSR_push.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -220,11 +220,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ACC62A8C2126F65A009B634A /* NSR_push.wav in Resources */,
 				873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */,
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
+				AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

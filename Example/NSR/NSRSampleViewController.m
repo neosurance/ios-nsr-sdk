@@ -6,8 +6,6 @@
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
-	
-
 	[self setup:nil];
 }
 

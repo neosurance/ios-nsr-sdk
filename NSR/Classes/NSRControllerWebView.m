@@ -10,14 +10,13 @@
 	[self.webConfiguration.userContentController addScriptMessageHandler:self name:@"app"];
 	int sh = [UIApplication sharedApplication].statusBarFrame.size.height;
 	CGSize size = self.view.frame.size;
-	self.webView = [[WKWebView alloc] initWithFrame:CGRectMake(0,sh, size.width, size.height-sh) configuration:self.webConfiguration];
+	self.webView = [[NSRWebView alloc] initWithFrame:CGRectMake(0,sh, size.width, size.height-sh) configuration:self.webConfiguration];
 	self.webView.navigationDelegate = self;
 	self.webView.scrollView.showsVerticalScrollIndicator = NO;
 	self.webView.scrollView.showsHorizontalScrollIndicator = NO;
 	self.webView.scrollView.bounces = NO;
 	if (@available(iOS 11.0, *)) {
 		self.webView.scrollView.insetsLayoutMarginsFromSafeArea = NO;
-		self.webView.scrollView.contentInsetAdjustmentBehavior= UIScrollViewContentInsetAdjustmentNever;
 	}
 	[self.webView loadRequest:[[NSURLRequest alloc] initWithURL:self.url]];
 	[self.view addSubview: self.webView];
@@ -78,6 +77,14 @@
 		}
 		if([@"showUrl" compare:body[@"what"]] == NSOrderedSame && body[@"url"] != nil) {
 			[nsr showUrl:body[@"url"] params:body[@"params"]];
+		}
+		if ([@"store" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"data"] != nil) {
+			[[NSUserDefaults standardUserDefaults] setObject:body[@"data"] forKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
+			[[NSUserDefaults standardUserDefaults] synchronize];
+		}
+		if ([@"retrive" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"callBack"] != nil) {
+			NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
+			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
 		}
 		if([@"callApi" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {

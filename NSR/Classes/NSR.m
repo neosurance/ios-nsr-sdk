@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.3";
+	return @"2.1.4";
 }
 
 -(NSString*)os {
@@ -40,6 +40,8 @@
 		eventWebViewSynchTime = 0;
 		setupInited = NO;
 		activityInited = NO;
+		
+		pushdelay = 0.1;
 	}
 	return self;
 }
@@ -566,12 +568,13 @@
 		[content setTitle:mPush[@"title"]];
 		[content setBody:mPush[@"body"]];
 		[content setUserInfo:mPush];
-		if([[UIApplication sharedApplication] applicationState] == UIApplicationStateActive) {
+		if(pushdelay == 0.1 && [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive) {
 			[self.pushPlayer play];
 		} else {
 			[content setSound:[UNNotificationSound soundNamed:@"NSR_push.wav"]];
 		}
-		UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:0.1 repeats:NO];
+		UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:pushdelay repeats:NO];
+		pushdelay = 0.1;
 		UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:[NSString stringWithFormat:@"NSR%@", [NSDate date]] content:content trigger:trigger];
 		[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
 	}
@@ -717,6 +720,13 @@
 
 -(void)eventWebViewSynched {
 	eventWebViewSynchTime = [[NSDate date] timeIntervalSince1970];
+}
+
+-(void)resetCruncher {
+	eventWebViewSynchTime = 0;
+	if (eventWebView != nil) {
+		[eventWebView reset];
+	}
 }
 
 -(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {
@@ -869,5 +879,9 @@
 	}else {
 		return YES;
 	}
+}
+
+-(void)setPushDelay:(double)t {
+	pushdelay = (t > 0) ? t: 0.1;
 }
 @end
