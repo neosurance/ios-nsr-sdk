@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.4";
+	return @"2.1.5";
 }
 
 -(NSString*)os {
@@ -185,6 +185,7 @@
 			[self.stillLocationManager startUpdatingLocation];
 		}
 	}
+	[self opportunisticTrace];
 }
 
 -(int)activityConfidence:(CMMotionActivity*)activity {
@@ -250,6 +251,7 @@
 				[self setLastConnection:connection];
 			}
 			NSLog(@"traceConnection: %@",connection);
+			[self opportunisticTrace];
 		}];
 		[[AFNetworkReachabilityManager sharedManager] startMonitoring];
 	}
@@ -290,6 +292,7 @@
 		}
 		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
 	}
+	[self opportunisticTrace];
 }
 
 -(void)stopTracePower {
@@ -318,6 +321,54 @@
 	}else{
 		return 0;
 	}
+}
+
+-(void)opportunisticTrace {
+	if (@available(iOS 10.0, *)) {
+		NSString* locationAuth = @"notAuthorized";
+		CLAuthorizationStatus st = [CLLocationManager authorizationStatus];
+		if(st == kCLAuthorizationStatusAuthorizedAlways){
+			locationAuth = @"authorized";
+		}else if(st == kCLAuthorizationStatusAuthorizedWhenInUse){
+			locationAuth = @"whenInUse";
+		}
+		NSString* lastLocationAuth = [self getLastLocationAuth];
+		if(lastLocationAuth == nil || ![locationAuth isEqualToString:lastLocationAuth]){
+			[self setLastLocationAuth:locationAuth];
+			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+			[payload setObject:locationAuth forKey:@"status"];
+			[self crunchEvent:@"locationAuth" payload:payload];
+		}
+		
+		[[UNUserNotificationCenter currentNotificationCenter] getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
+			NSString* pushAuth = (settings.authorizationStatus == UNAuthorizationStatusAuthorized)?@"authorized":@"notAuthorized";
+			NSString* lastPushAuth = [self getLastPushAuth];
+			if(lastPushAuth == nil || ![pushAuth isEqualToString:lastPushAuth]){
+				[self setLastPushAuth:pushAuth];
+				NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+				[payload setObject:pushAuth forKey:@"status"];
+				[self crunchEvent:@"pushAuth" payload:payload];
+			}
+		}];
+	}
+}
+
+-(void)setLastLocationAuth:(NSString*) locationAuth {
+	[[NSUserDefaults standardUserDefaults] setObject:locationAuth forKey:@"NSR_locationAuth"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSString*)getLastLocationAuth {
+	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_locationAuth"];
+}
+
+-(void)setLastPushAuth:(NSString*) pushAuth {
+	[[NSUserDefaults standardUserDefaults] setObject:pushAuth forKey:@"NSR_pushAuth"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSString*)getLastPushAuth {
+	return [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_pushAuth"];
 }
 
 -(void)setup:(NSDictionary*)settings {
@@ -374,7 +425,8 @@
 				[devicePayLoad setObject:pushToken forKey:@"push_token"];
 			}
 			[devicePayLoad setObject:[self os] forKey:@"os"];
-			[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
+			NSString* osVersion = [[NSProcessInfo processInfo] operatingSystemVersionString];
+			[devicePayLoad setObject:[NSString stringWithFormat:@"[sdk:%@] %@",[self version],osVersion] forKey:@"version"];
 			struct utsname systemInfo;
 			uname(&systemInfo);
 			[devicePayLoad setObject:[NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding] forKey:@"model"];
@@ -401,8 +453,8 @@
 		return;
 	}
 	NSLog(@"sendAction action %@", action);
-	NSLog(@"sendEvent policyCode %@", code);
-	NSLog(@"sendEvent details %@", details);
+	NSLog(@"sendAction policyCode %@", code);
+	NSLog(@"sendAction details %@", details);
 	
 	[self authorize:^(BOOL authorized) {
 		if(!authorized){
@@ -469,7 +521,8 @@
 			[devicePayLoad setObject:pushToken forKey:@"push_token"];
 		}
 		[devicePayLoad setObject:[self os] forKey:@"os"];
-		[devicePayLoad setObject:[[NSProcessInfo processInfo] operatingSystemVersionString] forKey:@"version"];
+		NSString* osVersion = [[NSProcessInfo processInfo] operatingSystemVersionString];
+		[devicePayLoad setObject:[NSString stringWithFormat:@"[sdk:%@] %@",[self version],osVersion] forKey:@"version"];
 		struct utsname systemInfo;
 		uname(&systemInfo);
 		[devicePayLoad setObject:[NSString stringWithCString:systemInfo.machine encoding:NSUTF8StringEncoding] forKey:@"model"];
@@ -854,6 +907,8 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
 	if(manager == self.stillLocationManager) {
 		[manager stopUpdatingLocation];
+	} else{
+		[self opportunisticTrace];
 	}
 	CLLocation *newLocation = [locations lastObject];
 	NSLog(@"enter didUpdateToLocation");
