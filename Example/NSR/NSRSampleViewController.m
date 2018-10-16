@@ -18,6 +18,7 @@
 	NSRUser* user = [[NSRUser alloc] init];
 	user.email = @"XXX@neosurance.eu";
 	user.code = @"XXX@neosurance.eu";
+	user.fiscalCode = @"XXXNSRXXX";
 	user.firstname = @"XXX";
 	user.lastname = @"neosurance";
 	[[NSR sharedInstance] registerUser:user];
@@ -33,11 +34,21 @@
 	[[NSR sharedInstance] showApp];
 }
 
-- (IBAction)sendEvent:(UIButton *)sender {
+- (IBAction)sendEventTest:(UIButton *)sender {
 	NSLog(@"Send Event");
 	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 	[payload setValue:@"*" forKey:@"type"];
 	[[NSR sharedInstance] sendEvent:@"test" payload:payload];
+}
+
+- (IBAction)sendEvent:(UIButton *)sender {
+	NSLog(@"Send Event");
+	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+	[payload setValue:@"IT" forKey:@"fromCode"];
+	[payload setValue:@"italia" forKey:@"fromCountry"];
+	[payload setValue:@"FR" forKey:@"toCode"];
+	[payload setValue:@"francia" forKey:@"toCountry"];
+	[[NSR sharedInstance] sendEvent:@"countryChange" payload:payload];
 }
 
 - (IBAction)setup:(UIButton *)sender {
@@ -53,6 +64,22 @@
 	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
 	
 	[[NSR sharedInstance] setup:settings];
+}
+
+- (IBAction)appLogin:(UIButton *)sender {
+	NSLog(@"AppLogin");
+	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"login_url"];
+	if(url != nil)
+		[[NSR sharedInstance] loginExecuted:url];
+}
+
+- (IBAction)appPayment:(UIButton *)sender {
+	NSLog(@"AppPayment");
+	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"payment_url"];
+	NSMutableDictionary* paymentInfo = [[NSMutableDictionary alloc] init];
+	[paymentInfo setObject:@"abcde" forKey:@"transactionCode"];
+	if(url != nil)
+		[[NSR sharedInstance] paymentExecuted:paymentInfo url:url];
 }
 
 -(UIStatusBarStyle) preferredStatusBarStyle{

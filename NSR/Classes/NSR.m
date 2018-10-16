@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.5";
+	return @"2.1.6";
 }
 
 -(NSString*)os {
@@ -938,5 +938,23 @@
 
 -(void)setPushDelay:(double)t {
 	pushdelay = (t > 0) ? t: 0.1;
+}
+
+-(void)loginExecuted:(NSString*) url {
+	if ([self gracefulDegradate]) {
+		return;
+	}
+	NSMutableDictionary* params = [[NSMutableDictionary alloc] init];
+	[params setObject:@"yes" forKey:@"loginExecuted"];
+	[self showUrl:url params:params];
+}
+
+-(void)paymentExecuted:(NSDictionary*) paymentInfo url:(NSString*) url {
+	if ([self gracefulDegradate]) {
+		return;
+	}
+	NSMutableDictionary* params = [[NSMutableDictionary alloc] init];
+	[params setObject:[self dictToJson:paymentInfo] forKey:@"paymentExecuted"];
+	[self showUrl:url params:params];
 }
 @end
