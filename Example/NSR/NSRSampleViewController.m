@@ -69,8 +69,11 @@
 - (IBAction)appLogin:(UIButton *)sender {
 	NSLog(@"AppLogin");
 	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"login_url"];
-	if(url != nil)
+	if(url != nil){
 		[[NSR sharedInstance] loginExecuted:url];
+		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"login_url"];
+		[[NSUserDefaults standardUserDefaults] synchronize];
+	}
 }
 
 - (IBAction)appPayment:(UIButton *)sender {
@@ -78,8 +81,11 @@
 	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"payment_url"];
 	NSMutableDictionary* paymentInfo = [[NSMutableDictionary alloc] init];
 	[paymentInfo setObject:@"abcde" forKey:@"transactionCode"];
-	if(url != nil)
+	if(url != nil){
 		[[NSR sharedInstance] paymentExecuted:paymentInfo url:url];
+		[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"payment_url"];
+		[[NSUserDefaults standardUserDefaults] synchronize];
+	}
 }
 
 -(UIStatusBarStyle) preferredStatusBarStyle{
