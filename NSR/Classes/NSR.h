@@ -17,6 +17,7 @@
 @protocol NSRWorkflowDelegate<NSObject>
 -(BOOL)executeLogin:(NSString*)url;
 -(NSDictionary*)executePayment:(NSDictionary*)payment url:(NSString*)url;
+-(void)confirmTransaction:(NSDictionary*)paymentInfo;
 @end
 
 @interface NSR:NSObject<CLLocationManagerDelegate> {

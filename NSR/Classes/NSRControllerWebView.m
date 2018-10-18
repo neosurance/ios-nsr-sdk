@@ -134,6 +134,9 @@
 				[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], paymentInfo != nil?[nsr dictToJson:paymentInfo]:@""]];
 			}
 		}
+		if(nsr.workflowDelegate != nil && [@"confirmTransaction" compare:body[@"what"]] == NSOrderedSame && body[@"paymentInfo"] != nil) {
+			[nsr.workflowDelegate confirmTransaction:body[@"paymentInfo"]];
+		}
 	}
 }
 
