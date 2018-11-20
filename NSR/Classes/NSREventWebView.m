@@ -29,10 +29,10 @@
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}
 	if(body[@"what"] != nil) {
-		if([@"init" compare:body[@"synched"]] == NSOrderedSame) {
+		if([@"init" isEqualToString:body[@"synched"]]) {
 			[nsr eventWebViewSynched];
 		}
-		if([@"init" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"init" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(authorized){
 					NSMutableDictionary* message = [[NSMutableDictionary alloc] init];
@@ -44,24 +44,24 @@
 				}
 			}];
 		}
-		if([@"token" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"token" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(authorized) {
 					[self eval:[NSString stringWithFormat:@"%@('%@')",body[@"callBack"], [nsr getToken]]];
 				}
 			}];
 		}
-		if([@"user" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"user" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:[[nsr getUser] toDict:YES]]]];
 		}
-		if([@"push" compare:body[@"what"]] == NSOrderedSame && body[@"title"] != nil && body[@"body"] != nil) {
+		if([@"push" isEqualToString:body[@"what"]] && body[@"title"] != nil && body[@"body"] != nil) {
 			NSMutableDictionary* push = [[NSMutableDictionary alloc] init];
 			[push setObject:body[@"title"] forKey:@"title"];
 			[push setObject:body[@"body"] forKey:@"body"];
 			[push setObject:body[@"url"] forKey:@"url"];
 			[nsr showPush:push];
 		}
-		if([@"geoCode" compare:body[@"what"]] == NSOrderedSame && body[@"location"] != nil && body[@"callBack"] != nil) {
+		if([@"geoCode" isEqualToString:body[@"what"]] && body[@"location"] != nil && body[@"callBack"] != nil) {
 			CLGeocoder* geocoder = [[CLGeocoder alloc] init];
 			CLLocation* location = [[CLLocation alloc] initWithLatitude:[body[@"location"][@"latitude"] doubleValue] longitude:[body[@"location"][@"longitude"] doubleValue]];
 			[geocoder reverseGeocodeLocation:location completionHandler:^(NSArray* placemarks, NSError* error){
@@ -76,15 +76,15 @@
 				}
 			}];
 		}
-		if ([@"store" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"data"] != nil) {
+		if ([@"store" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"data"] != nil) {
 			[[NSUserDefaults standardUserDefaults] setObject:body[@"data"] forKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
 			[[NSUserDefaults standardUserDefaults] synchronize];
 		}
-		if ([@"retrive" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"callBack"] != nil) {
+		if ([@"retrive" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"callBack"] != nil) {
 			NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
 		}
-		if([@"callApi" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"callApi" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(!authorized){
 					NSMutableDictionary* result = [[NSMutableDictionary alloc] init];
@@ -108,8 +108,12 @@
 				}];
 			}];
 		}
-		if(nsr.workflowDelegate != nil && [@"executeLogin" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
-			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr.workflowDelegate executeLogin:@""]?@"true":@"false"]];
+		if([@"accurateLocation" isEqualToString:body[@"what"]] && body[@"meters"] != nil && body[@"duration"] != nil) {
+			bool extend = (body[@"extend"] != nil && [body[@"extend"] boolValue]);
+			[nsr accurateLocation:[body[@"meters"] doubleValue] duration:(int)[body[@"duration"] integerValue] extend:extend];
+		}
+		if([@"accurateLocationEnd" isEqualToString:body[@"what"]]) {
+			[nsr accurateLocationEnd];
 		}
 	}
 }
@@ -131,6 +135,8 @@
 }
 
 -(void)eval:(NSString*)javascript {
-	[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+	});
 }
 @end

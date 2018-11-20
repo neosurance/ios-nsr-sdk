@@ -24,12 +24,12 @@
 	NSRControllerWebView* controllerWebView;
 	NSREventWebView* eventWebView;
 	long eventWebViewSynchTime;
-	BOOL activityInited;
 	BOOL stillLocationSent;
 	BOOL setupInited;
 	double pushdelay;
 }
-@property(nonatomic, strong) CLLocationManager* significantLocationManager;
+@property(nonatomic, strong) CLLocationManager* locationManager;
+@property(nonatomic, strong) CLLocationManager* hardLocationManager;
 @property(nonatomic, strong) CLLocationManager* stillLocationManager;
 @property(nonatomic, strong) CMMotionActivityManager* motionActivityManager;
 @property(nonatomic, strong) AVAudioPlayer* pushPlayer;
@@ -44,6 +44,8 @@
 -(NSString*)os;
 -(void)authorize:(void(^)(BOOL authorized))completionHandler;
 -(void)registerUser:(NSRUser*) user;
+-(void)accurateLocation:(double)meters duration:(int)duration extend:(bool)extend;
+-(void)accurateLocationEnd;
 -(void)showApp;
 -(void)showApp:(NSDictionary*)params;
 -(void)showUrl:(NSString*)url;

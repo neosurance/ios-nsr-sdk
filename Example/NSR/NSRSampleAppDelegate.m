@@ -6,6 +6,11 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+	self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+	self.viewController = [[NSRSampleViewController alloc] init];
+	self.window.rootViewController = self.viewController;
+	[self.window makeKeyAndVisible];
+
 	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
 	center.delegate = self;
 	UNAuthorizationOptions options = UNAuthorizationOptionAlert + UNAuthorizationOptionSound;

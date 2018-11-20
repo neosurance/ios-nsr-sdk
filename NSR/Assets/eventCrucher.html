@@ -13,6 +13,13 @@
 		}
 	}
 
+	function NSRlog(msg) {
+		console.log('EVC>> ' + msg)
+		NSRPostMsg({
+			log : 'EVC>> ' + msg
+		})
+	}
+
 	function init() {
 		NSRPostMsg({
 			what : 'init',

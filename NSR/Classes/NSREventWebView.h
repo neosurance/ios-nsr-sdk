@@ -7,6 +7,7 @@
 
 -(void)synch;
 -(void)reset;
+-(void)eval:(NSString*)javascript;
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 
 @end

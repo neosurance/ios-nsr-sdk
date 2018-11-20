@@ -18,8 +18,8 @@
 		6003F5A7195388D20070C39A /* NSRSampleViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5A6195388D20070C39A /* NSRSampleViewController.m */; };
 		6003F5A9195388D20070C39A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5A8195388D20070C39A /* Images.xcassets */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
-		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
 		AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */ = {isa = PBXBuildFile; fileRef = ACC62A8B2126F659009B634A /* NSR_push.wav */; };
+		ACC9203B219E028C00A7D545 /* sample.html in Resources */ = {isa = PBXBuildFile; fileRef = ACC9203A219E028C00A7D545 /* sample.html */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,11 +44,11 @@
 		6003F5AF195388D20070C39A /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		64E6665AF4C136A2CAFE04AE /* Pods-NSR_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NSR_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-NSR_Tests/Pods-NSR_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		95B9D30B5DA0DAFC3A5D40FA /* Pods-NSR_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NSR_Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NSR_Tests/Pods-NSR_Tests.debug.xcconfig"; sourceTree = "<group>"; };
 		A87E9A043CF59430B7593A0C /* Pods_NSR_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NSR_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC102B402126BB1A001B8C19 /* NSRSampleAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSRSampleAppDelegate.h; sourceTree = "<group>"; };
 		ACC62A8B2126F659009B634A /* NSR_push.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = NSR_push.wav; sourceTree = "<group>"; };
+		ACC9203A219E028C00A7D545 /* sample.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = sample.html; sourceTree = "<group>"; };
 		E46C9F1982CDCC5C3157ACE1 /* Pods-NSR_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NSR_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-NSR_Example/Pods-NSR_Example.release.xcconfig"; sourceTree = "<group>"; };
 		FA57A9EE7F4E815DA8A996FC /* Pods-NSR_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NSR_Example.debug.xcconfig"; path = "Pods/Target Support Files/Pods-NSR_Example/Pods-NSR_Example.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -71,6 +71,7 @@
 		6003F581195388D10070C39A = {
 			isa = PBXGroup;
 			children = (
+				ACC9203A219E028C00A7D545 /* sample.html */,
 				ACC62A8B2126F659009B634A /* NSR_push.wav */,
 				60FF7A9C1954A5C5007DD14C /* Podspec Metadata */,
 				6003F593195388D20070C39A /* Example for NSR */,
@@ -110,7 +111,6 @@
 				6003F5A6195388D20070C39A /* NSRSampleViewController.m */,
 				3E64FC2621087D210084207C /* NSRSampleWFDelegate.h */,
 				3E64FC2521087D210084207C /* NSRSampleWFDelegate.m */,
-				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -220,10 +220,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */,
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
+				ACC9203B219E028C00A7D545 /* sample.html in Resources */,
 				AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -389,7 +389,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NSR/NSR-Prefix.pch";
 				INFOPLIST_FILE = "NSR/NSR-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = eu.neosurance.nsrsample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -410,7 +410,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NSR/NSR-Prefix.pch";
 				INFOPLIST_FILE = "NSR/NSR-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = eu.neosurance.nsrsample;
 				PRODUCT_NAME = "$(TARGET_NAME)";

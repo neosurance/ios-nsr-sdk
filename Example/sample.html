@@ -1,0 +1,47 @@
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+	padding-top: 30px
+}
+
+button {
+	font-family: Sans-Serif;
+	margin: 10px;
+	font-size: 18px;
+	width: 75%;
+}
+</style>
+<script>
+	function exec(what) {
+		window.webkit.messageHandlers.app.postMessage({
+			what : what
+		})
+	}
+</script>
+</head>
+<body>
+	<center>
+		<button onclick="exec('setup')">setup</button>
+		<br>
+		<button onclick="exec('registerUser')">registerUser</button>
+		<br>
+		<button onclick="exec('forgetUser')">forgetUser</button>
+		<br>
+		<button onclick="exec('showApp')">showApp</button>
+		<br>
+		<button onclick="exec('sendEvent')">sendEvent</button>
+		<br>
+		<button onclick="exec('appLogin')">appLogin</button>
+		<br>
+		<button onclick="exec('appPayment')">appPayment</button>
+		<br>
+		<button onclick="exec('accurateLocation')">accurateLocation</button>
+		<br>
+		<button onclick="exec('accurateLocationEnd')">accurateLocationEnd</button>
+		<br>
+	</center>
+</body>
+</html>

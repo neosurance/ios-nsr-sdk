@@ -4,60 +4,100 @@
 
 @implementation NSRSampleViewController
 
-- (void)viewDidLoad {
-	[super viewDidLoad];
-	[self setup:nil];
+-(void)loadView {
+	[super loadView];
+	[self setup];
+
+	self.webConfiguration = [[WKWebViewConfiguration alloc] init];
+	[self.webConfiguration.userContentController addScriptMessageHandler:self name:@"app"];
+	int sh = [UIApplication sharedApplication].statusBarFrame.size.height;
+	CGSize size = self.view.frame.size;
+	
+	self.webView = [[NSRWebView alloc] initWithFrame:CGRectMake(0,sh, size.width, size.height-sh) configuration:self.webConfiguration];
+	self.webView.scrollView.bounces = NO;
+	if (@available(iOS 11.0, *)) {
+		self.webView.scrollView.insetsLayoutMarginsFromSafeArea = NO;
+	}
+	[self.webView loadRequest:[[NSURLRequest alloc] initWithURL:[[NSBundle mainBundle] URLForResource:@"sample" withExtension:@"html"]]];
+	[self.view addSubview: self.webView];
 }
 
 - (void)didReceiveMemoryWarning {
 	[super didReceiveMemoryWarning];
 }
 
-- (IBAction)registerUser:(UIButton *)sender {
+-(void)userContentController:(WKUserContentController *)userContentController didReceiveScriptMessage:(WKScriptMessage *)message {
+	NSDictionary *body = (NSDictionary*)message.body;
+	if(body[@"what"] != nil) {
+		if([@"setup" isEqualToString:body[@"what"]]) {
+			[self setup];
+		}
+		if([@"registerUser" isEqualToString:body[@"what"]]) {
+			[self registerUser];
+		}
+		if([@"forgetUser" isEqualToString:body[@"what"]]) {
+			[self forgetUser];
+		}
+		if([@"showApp" isEqualToString:body[@"what"]]) {
+			[self showApp];
+		}
+		if([@"sendEvent" isEqualToString:body[@"what"]]) {
+			[self sendEvent];
+		}
+		if([@"appLogin" isEqualToString:body[@"what"]]) {
+			[self appLogin];
+		}
+		if([@"appPayment" isEqualToString:body[@"what"]]) {
+			[self appPayment];
+		}
+		if([@"accurateLocation" isEqualToString:body[@"what"]]) {
+			[[NSR sharedInstance] accurateLocation:0 duration:20 extend:YES];
+		}
+		if([@"accurateLocationEnd" isEqualToString:body[@"what"]]) {
+			[[NSR sharedInstance] accurateLocationEnd];
+		}
+	}
+}
+
+-(void)registerUser {
 	NSLog(@"Register User");
 	NSRUser* user = [[NSRUser alloc] init];
-	user.email = @"XXX@neosurance.eu";
-	user.code = @"XXX@neosurance.eu";
-	user.fiscalCode = @"XXXNSRXXX";
-	user.firstname = @"XXX";
-	user.lastname = @"neosurance";
+	user.email = @"TG.testIOS@neosurance.eu";
+	user.code = @"TG.testIOS@neosurance.eu";
+	user.firstname = @"testIOS";
+	user.lastname = @"testIOS";
 	[[NSR sharedInstance] registerUser:user];
 }
 
-- (IBAction)forgetUser:(UIButton *)sender {
+-(void)forgetUser {
 	NSLog(@"Forget User");
 	[[NSR sharedInstance] forgetUser];
 }
 
-- (IBAction)showApp:(UIButton *)sender {
+-(void)showApp {
 	NSLog(@"Policies");
 	[[NSR sharedInstance] showApp];
 }
 
-- (IBAction)sendEventTest:(UIButton *)sender {
-	NSLog(@"Send Event");
-	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-	[payload setValue:@"*" forKey:@"type"];
-	[[NSR sharedInstance] sendEvent:@"test" payload:payload];
-}
-
-- (IBAction)sendEvent:(UIButton *)sender {
+-(void)sendEvent {
 	NSLog(@"Send Event");
 	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 	[payload setValue:@"IT" forKey:@"fromCode"];
 	[payload setValue:@"italia" forKey:@"fromCountry"];
 	[payload setValue:@"FR" forKey:@"toCode"];
 	[payload setValue:@"francia" forKey:@"toCountry"];
+	[payload setValue:[NSNumber numberWithInteger:1] forKey:@"fake"];
 	[[NSR sharedInstance] sendEvent:@"countryChange" payload:payload];
 }
 
-- (IBAction)setup:(UIButton *)sender {
+-(void)setup {
 	NSLog(@"Setup");
 	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
 	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
 	[settings setObject:@"<code>" forKey:@"code"];
 	[settings setObject:@"<secret_key>" forKey:@"secret_key"];
+
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
 	
 	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
@@ -66,7 +106,7 @@
 	[[NSR sharedInstance] setup:settings];
 }
 
-- (IBAction)appLogin:(UIButton *)sender {
+-(void)appLogin {
 	NSLog(@"AppLogin");
 	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"login_url"];
 	if(url != nil){
@@ -76,7 +116,7 @@
 	}
 }
 
-- (IBAction)appPayment:(UIButton *)sender {
+-(void)appPayment {
 	NSLog(@"AppPayment");
 	NSString* url = [[NSUserDefaults standardUserDefaults] objectForKey:@"payment_url"];
 	NSMutableDictionary* paymentInfo = [[NSMutableDictionary alloc] init];

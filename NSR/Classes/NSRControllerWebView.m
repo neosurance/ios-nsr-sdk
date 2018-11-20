@@ -50,7 +50,7 @@
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}
 	if(body[@"what"] != nil) {
-		if([@"init" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"init" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				NSMutableDictionary* message = [[NSMutableDictionary alloc] init];
 				[message setObject:[nsr getSettings][@"base_url"] forKey:@"api"];
@@ -60,33 +60,33 @@
 				[self eval:[NSString stringWithFormat:@"%@(%@)",body[@"callBack"], [nsr dictToJson:message]]];
 			}];
 		}
-		if([@"close" compare:body[@"what"]] == NSOrderedSame) {
+		if([@"close" isEqualToString:body[@"what"]]) {
 			[self close];
 		}
-		if([@"photo" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"photo" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self takePhoto:body[@"callBack"]];
 		}
-		if([@"location" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"location" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self getLocation:body[@"callBack"]];
 		}
-		if([@"user" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"user" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:[[nsr getUser] toDict:YES]]]];
 		}
-		if([@"showApp" compare:body[@"what"]] == NSOrderedSame) {
+		if([@"showApp" isEqualToString:body[@"what"]]) {
 			[nsr showApp:body[@"params"]];
 		}
-		if([@"showUrl" compare:body[@"what"]] == NSOrderedSame && body[@"url"] != nil) {
+		if([@"showUrl" isEqualToString:body[@"what"]] && body[@"url"] != nil) {
 			[nsr showUrl:body[@"url"] params:body[@"params"]];
 		}
-		if ([@"store" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"data"] != nil) {
+		if ([@"store" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"data"] != nil) {
 			[[NSUserDefaults standardUserDefaults] setObject:body[@"data"] forKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
 			[[NSUserDefaults standardUserDefaults] synchronize];
 		}
-		if ([@"retrive" compare:body[@"what"]] == NSOrderedSame && body[@"key"] != nil && body[@"callBack"] != nil) {
+		if ([@"retrive" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"callBack"] != nil) {
 			NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
 		}
-		if([@"callApi" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if([@"callApi" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
 				if(!authorized){
 					NSMutableDictionary* result = [[NSMutableDictionary alloc] init];
@@ -110,7 +110,7 @@
 				}];
 			}];
 		}
-		if([@"geoCode" compare:body[@"what"]] == NSOrderedSame && body[@"location"] != nil && body[@"callBack"] != nil) {
+		if([@"geoCode" isEqualToString:body[@"what"]] && body[@"location"] != nil && body[@"callBack"] != nil) {
 			CLGeocoder* geocoder = [[CLGeocoder alloc] init];
 			CLLocation* location = [[CLLocation alloc] initWithLatitude:[body[@"location"][@"latitude"] doubleValue] longitude:[body[@"location"][@"longitude"] doubleValue]];
 			[geocoder reverseGeocodeLocation:location completionHandler:^(NSArray* placemarks, NSError* error){
@@ -125,16 +125,16 @@
 				}
 			}];
 		}
-		if(nsr.workflowDelegate != nil && [@"executeLogin" compare:body[@"what"]] == NSOrderedSame && body[@"callBack"] != nil) {
+		if(nsr.workflowDelegate != nil && [@"executeLogin" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr.workflowDelegate executeLogin:self.webView.URL.absoluteString]?@"true":@"false"]];
 		}
-		if(nsr.workflowDelegate != nil && [@"executePayment" compare:body[@"what"]] == NSOrderedSame && body[@"payment"] != nil) {
+		if(nsr.workflowDelegate != nil && [@"executePayment" isEqualToString:body[@"what"]] && body[@"payment"] != nil) {
 			NSDictionary* paymentInfo = [nsr.workflowDelegate executePayment:body[@"payment"] url:self.webView.URL.absoluteString];
 			if(body[@"callBack"] != nil) {
 				[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], paymentInfo != nil?[nsr dictToJson:paymentInfo]:@""]];
 			}
 		}
-		if(nsr.workflowDelegate != nil && [@"confirmTransaction" compare:body[@"what"]] == NSOrderedSame && body[@"paymentInfo"] != nil) {
+		if(nsr.workflowDelegate != nil && [@"confirmTransaction" isEqualToString:body[@"what"]] && body[@"paymentInfo"] != nil) {
 			[nsr.workflowDelegate confirmTransaction:body[@"paymentInfo"]];
 		}
 	}
@@ -258,7 +258,9 @@
 }
 
 -(void)eval:(NSString*)javascript {
-	[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+	dispatch_async(dispatch_get_main_queue(), ^(void){
+		[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+	});
 }
 @end
 

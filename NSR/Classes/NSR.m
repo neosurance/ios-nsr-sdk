@@ -7,7 +7,7 @@
 @implementation NSR
 
 -(NSString*)version {
-	return @"2.1.7";
+	return @"2.2.0";
 }
 
 -(NSString*)os {
@@ -31,15 +31,15 @@
 		self.pushPlayer.numberOfLoops = 0;
 		
 		self.stillLocationManager = nil;
-		self.significantLocationManager = nil;
-		
+		self.locationManager = nil;
+		self.hardLocationManager = nil;
+
 		stillLocationSent = NO;
 		controllerWebView = nil;
 		eventWebView = nil;
 		
 		eventWebViewSynchTime = 0;
 		setupInited = NO;
-		activityInited = NO;
 		
 		pushdelay = 0.1;
 	}
@@ -50,19 +50,17 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
+	[self stopHardTraceLocation];
 	[self stopTraceLocation];
-	[self stopTraceActivity];
 	[self stopTraceConnection];
-	[self stopTracePower];
 	NSDictionary* conf = [self getConf];
 	if (conf != nil && eventWebView == nil && [conf[@"local_tracking"] boolValue]) {
 		NSLog(@"Making NSREventWebView");
 		eventWebView = [[NSREventWebView alloc] init];
 	}
-	[self traceLocation];
-	[self traceActivity];
 	[self traceConnection];
-	[self tracePower];
+	[self traceLocation];
+	[self hardTraceLocation];
 }
 
 -(void)initStillLocation {
@@ -73,18 +71,32 @@
 		[self.stillLocationManager setPausesLocationUpdatesAutomatically:NO];
 		[self.stillLocationManager setDistanceFilter:kCLDistanceFilterNone];
 		[self.stillLocationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		self.stillLocationManager.delegate = self;
 		[self.stillLocationManager requestAlwaysAuthorization];
 	}
 }
 
 -(void)initLocation {
-	if(self.significantLocationManager == nil) {
+	if(self.locationManager == nil) {
 		NSLog(@"initLocation");
-		self.significantLocationManager = [[CLLocationManager alloc] init];
-		[self.significantLocationManager setAllowsBackgroundLocationUpdates:YES];
-		[self.significantLocationManager setPausesLocationUpdatesAutomatically:NO];
-		self.significantLocationManager.delegate = self;
-		[self.significantLocationManager requestAlwaysAuthorization];
+		self.locationManager = [[CLLocationManager alloc] init];
+		[self.locationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.locationManager setPausesLocationUpdatesAutomatically:NO];
+		[self.locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		self.locationManager.delegate = self;
+		[self.locationManager requestAlwaysAuthorization];
+	}
+}
+
+-(void)initHardLocation {
+	if(self.hardLocationManager == nil) {
+		NSLog(@"initHardLocation");
+		self.hardLocationManager = [[CLLocationManager alloc] init];
+		[self.hardLocationManager setAllowsBackgroundLocationUpdates:YES];
+		[self.hardLocationManager setPausesLocationUpdatesAutomatically:NO];
+		[self.hardLocationManager setDesiredAccuracy:kCLLocationAccuracyBest];
+		self.hardLocationManager.delegate = self;
+		[self.hardLocationManager requestAlwaysAuthorization];
 	}
 }
 
@@ -92,14 +104,101 @@
 	NSDictionary* conf = [self getConf];
 	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
 		[self initLocation];
-		[self.significantLocationManager startMonitoringSignificantLocationChanges];
+		[self.locationManager startMonitoringSignificantLocationChanges];
 	}
 }
 
+-(void)hardTraceLocation {
+	NSLog(@"hardTraceLocation");
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+		if([self isHardTraceLocation]){
+			[self initHardLocation];
+			[self.hardLocationManager setDistanceFilter:[self getHardTraceMeters]];
+			[self.hardLocationManager startUpdatingLocation];
+			NSLog(@"hardTraceLocation reactivated");
+		}else{
+			[self stopHardTraceLocation];
+			[self setHardTraceEnd:0];
+		}
+	}
+}
+
+-(void)stopHardTraceLocation {
+	if(self.hardLocationManager != nil){
+		NSLog(@"stopHardTraceLocation");
+		[self.hardLocationManager stopUpdatingLocation];
+	}
+}
+
+-(void)accurateLocation:(double)meters duration:(int)duration extend:(bool)extend {
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+		NSLog(@"accurateLocation");
+		[self initHardLocation];
+		if(![self isHardTraceLocation] || meters != [self getHardTraceMeters]) {
+			[self setHardTraceMeters:meters];
+			[self setHardTraceEnd:[[NSDate date] timeIntervalSince1970] + duration];
+			[self.hardLocationManager setDistanceFilter:meters];
+			[self.hardLocationManager startUpdatingLocation];
+		}
+		if(extend) {
+			[self setHardTraceEnd:[[NSDate date] timeIntervalSince1970] + duration];
+		}
+	}
+}
+
+-(void)accurateLocationEnd {
+	NSLog(@"accurateLocationEnd");
+	[self stopHardTraceLocation];
+	[self setHardTraceEnd:0];
+}
+
+-(void)checkHardTraceLocation {
+	if(![self isHardTraceLocation]){
+		[self stopHardTraceLocation];
+		[self setHardTraceEnd:0];
+	}
+}
+
+-(bool) isHardTraceLocation {
+	int hte = [self getHardTraceEnd];
+	return (hte > 0 && [[NSDate date] timeIntervalSince1970] < hte);
+}
+
+-(int)getHardTraceEnd {
+	NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_hardTraceEnd"];
+	if(n != nil) {
+		return [n intValue];
+	}else{
+		return 0;
+	}
+}
+
+-(void)setHardTraceEnd:(int) hardTraceEnd {
+	[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:hardTraceEnd] forKey:@"NSR_hardTraceEnd"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(double)getHardTraceMeters {
+	NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"NSR_hardTraceMeters"];
+	if(n != nil) {
+		return [n doubleValue];
+	}else{
+		return 0;
+	}
+}
+
+-(void)setHardTraceMeters:(double) meters {
+	[[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithDouble:meters] forKey:@"NSR_hardTraceMeters"];
+	[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+
 -(void)stopTraceLocation {
 	NSLog(@"stopTraceLocation");
-	if(self.significantLocationManager != nil){
-		[self.significantLocationManager stopMonitoringSignificantLocationChanges];
+	if(self.locationManager != nil){
+		[self.locationManager stopMonitoringSignificantLocationChanges];
 	}
 }
 
@@ -108,7 +207,6 @@
 		NSLog(@"initActivity");
 		self.motionActivityManager = [[CMMotionActivityManager alloc] init];
 		self.motionActivities = [[NSMutableArray alloc] init];
-		activityInited = NO;
 	}
 }
 
@@ -126,7 +224,6 @@
 			}
 			[self.motionActivities addObject:activity];
 		}];
-		activityInited = YES;
 	}
 }
 
@@ -185,7 +282,7 @@
 			[self.stillLocationManager startUpdatingLocation];
 		}
 	}
-	[self opportunisticTrace];
+	[self.motionActivityManager stopActivityUpdates];
 }
 
 -(int)activityConfidence:(CMMotionActivity*)activity {
@@ -212,16 +309,6 @@
 		return @"car";
 	}
 	return nil;
-}
-
--(void)stopTraceActivity {
-	NSLog(@"stopTraceActivity");
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(recoveryActivity) object: nil];
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
-	if(self.motionActivityManager != nil && activityInited) {
-		[self.motionActivityManager stopActivityUpdates];
-		activityInited = NO;
-	}
 }
 
 -(void)setLastActivity:(NSString*) lastActivity {
@@ -290,14 +377,7 @@
 			[self setLastPowerLevel:batteryLevel];
 			[self crunchEvent:@"power" payload:payload];
 		}
-		[self performSelector:@selector(tracePower) withObject: nil afterDelay: [conf[@"time"] intValue]];
 	}
-	[self opportunisticTrace];
-}
-
--(void)stopTracePower {
-	NSLog(@"stopTracePower");
-	[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(tracePower) object: nil];
 }
 
 -(void)setLastPower:(NSString*) lastPower {
@@ -324,6 +404,8 @@
 }
 
 -(void)opportunisticTrace {
+	[self tracePower];
+	[self traceActivity];
 	if (@available(iOS 10.0, *)) {
 		NSString* locationAuth = @"notAuthorized";
 		CLAuthorizationStatus st = [CLLocationManager authorizationStatus];
@@ -337,7 +419,7 @@
 			[self setLastLocationAuth:locationAuth];
 			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 			[payload setObject:locationAuth forKey:@"status"];
-			[self crunchEvent:@"locationAuth" payload:payload];
+			[self sendEvent:@"locationAuth" payload:payload];
 		}
 		
 		[[UNUserNotificationCenter currentNotificationCenter] getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
@@ -347,7 +429,7 @@
 				[self setLastPushAuth:pushAuth];
 				NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 				[payload setObject:pushAuth forKey:@"status"];
-				[self crunchEvent:@"pushAuth" payload:payload];
+				[self sendEvent:@"pushAuth" payload:payload];
 			}
 		}];
 	}
@@ -712,7 +794,6 @@
 
 -(void)authorize:(void (^)(BOOL authorized))completionHandler {
 	NSDictionary* auth = [self getAuth];
-	NSLog(@"saved setting: %@", auth);
 	if(auth != nil && [auth[@"expire"] longValue]/1000 > [[NSDate date] timeIntervalSince1970]) {
 		completionHandler(YES);
 	} else {
@@ -783,7 +864,7 @@
 }
 
 -(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {
-	return (oldConf == nil || [conf[@"time"] intValue] != [oldConf[@"time"] intValue] || (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]));
+	return (oldConf == nil ||	![conf isEqualToDictionary:oldConf] || (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]));
 }
 
 -(void)forgetUser {
@@ -907,9 +988,9 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
 	if(manager == self.stillLocationManager) {
 		[manager stopUpdatingLocation];
-	} else{
-		[self opportunisticTrace];
 	}
+	[self opportunisticTrace];
+	[self checkHardTraceLocation];
 	CLLocation *newLocation = [locations lastObject];
 	NSLog(@"enter didUpdateToLocation");
 	NSDictionary* conf = [self getConf];
