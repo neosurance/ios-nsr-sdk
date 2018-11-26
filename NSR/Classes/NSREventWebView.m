@@ -58,7 +58,9 @@
 			NSMutableDictionary* push = [[NSMutableDictionary alloc] init];
 			[push setObject:body[@"title"] forKey:@"title"];
 			[push setObject:body[@"body"] forKey:@"body"];
-			[push setObject:body[@"url"] forKey:@"url"];
+			if(body[@"url"] != nil){
+				[push setObject:body[@"url"] forKey:@"url"];
+			}
 			[nsr showPush:push];
 		}
 		if([@"geoCode" isEqualToString:body[@"what"]] && body[@"location"] != nil && body[@"callBack"] != nil) {

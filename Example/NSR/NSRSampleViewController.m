@@ -44,6 +44,9 @@
 		if([@"sendEvent" isEqualToString:body[@"what"]]) {
 			[self sendEvent];
 		}
+		if([@"crunchEvent" isEqualToString:body[@"what"]]) {
+			[self crunchEvent];
+		}
 		if([@"appLogin" isEqualToString:body[@"what"]]) {
 			[self appLogin];
 		}
@@ -56,16 +59,29 @@
 		if([@"accurateLocationEnd" isEqualToString:body[@"what"]]) {
 			[[NSR sharedInstance] accurateLocationEnd];
 		}
+		if([@"resetCruncher" isEqualToString:body[@"what"]]) {
+			[[NSR sharedInstance] resetCruncher];
+		}
 	}
 }
 
 -(void)registerUser {
 	NSLog(@"Register User");
 	NSRUser* user = [[NSRUser alloc] init];
-	user.email = @"TG.testIOS@neosurance.eu";
-	user.code = @"TG.testIOS@neosurance.eu";
-	user.firstname = @"testIOS";
-	user.lastname = @"testIOS";
+	user.email = @"Pippo1@neosurance.eu";
+	user.code = @"Pippo1@neosurance.eu";
+	user.firstname = @"Pippo1";
+	user.lastname = @"Pippo1";
+	NSMutableDictionary* locals =[[NSMutableDictionary alloc] init];
+	[locals setValue:@"<push_token>" forKey:@"pushToken"];
+	[locals setValue:@"giovanni.tigli@gmail.com" forKey:@"email"];
+	[locals setValue:@"mario" forKey:@"firstname"];
+	[locals setValue:@"rossi" forKey:@"lastname"];
+	[locals setValue:@"tglgnn69a28g273e" forKey:@"fiscalCode"];
+	[locals setValue:@"via binda, 12" forKey:@"address"];
+	[locals setValue:@"Forlì" forKey:@"city"];
+	[locals setValue:@"FC" forKey:@"stateProvince"];
+	user.locals = locals;
 	[[NSR sharedInstance] registerUser:user];
 }
 
@@ -88,6 +104,14 @@
 	[payload setValue:@"francia" forKey:@"toCountry"];
 	[payload setValue:[NSNumber numberWithInteger:1] forKey:@"fake"];
 	[[NSR sharedInstance] sendEvent:@"countryChange" payload:payload];
+}
+
+-(void)crunchEvent {
+	NSLog(@"crunch Event");
+	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+	[payload setValue:[NSNumber numberWithFloat:51.16135787] forKey:@"latitude"];
+	[payload setValue:[NSNumber numberWithFloat:-0.17700102] forKey:@"longitude"];
+	[[NSR sharedInstance] crunchEvent:@"position" payload:payload];
 }
 
 -(void)setup {

@@ -185,7 +185,7 @@
 				TargetAttributes = {
 					6003F589195388D20070C39A = {
 						DevelopmentTeam = 5PGWE9N92L;
-						ProvisioningStyle = Manual;
+						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -384,8 +384,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = 5PGWE9N92L;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NSR/NSR-Prefix.pch";
 				INFOPLIST_FILE = "NSR/NSR-Info.plist";
@@ -394,7 +394,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = eu.neosurance.nsrsample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "070797e7-7ff6-4fad-87c9-a0bc9c3a37e2";
-				PROVISIONING_PROFILE_SPECIFIER = nsrsample;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -405,8 +405,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Manual;
-				DEVELOPMENT_TEAM = 5PGWE9N92L;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "NSR/NSR-Prefix.pch";
 				INFOPLIST_FILE = "NSR/NSR-Info.plist";
@@ -415,7 +415,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = eu.neosurance.nsrsample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "070797e7-7ff6-4fad-87c9-a0bc9c3a37e2";
-				PROVISIONING_PROFILE_SPECIFIER = nsrsample;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
