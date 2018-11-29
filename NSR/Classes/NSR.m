@@ -737,7 +737,9 @@ static BOOL _logDisabled = NO;
 
 -(void)killPush:(NSString*) pid {
 	if (@available(iOS 10.0, *)) {
-		[[UNUserNotificationCenter currentNotificationCenter] removePendingNotificationRequestsWithIdentifiers:@[pid]];
+		if(pid != nil){
+			[[UNUserNotificationCenter currentNotificationCenter] removePendingNotificationRequestsWithIdentifiers:@[pid]];
+		}
 	}
 }
 

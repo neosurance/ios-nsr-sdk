@@ -33,13 +33,13 @@
 	}
 	if(body[@"push"] != nil) {
 		if(body[@"delay"] != nil) {
-			[nsr showPush:(body[@"id"] != nil)?body[@"id"]:[NSString stringWithFormat:@"%f",[[NSDate date] timeIntervalSince1970]] push:body[@"push"] delay:[body[@"delay"] intValue]];
+			[nsr showPush:(body[@"id"] != nil)?[body[@"id"] stringValue]:[NSString stringWithFormat:@"%f",[[NSDate date] timeIntervalSince1970]] push:body[@"push"] delay:[body[@"delay"] intValue]];
 		}else{
 			[nsr showPush:body[@"push"]];
 		}
 	}
 	if(body[@"killPush"] != nil) {
-		[nsr killPush:body[@"id"]];
+		[nsr killPush:[body[@"killPush"] stringValue]];
 	}
 	if(body[@"what"] != nil) {
 		if([@"continueInitJob" isEqualToString:body[@"what"]]) {
