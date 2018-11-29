@@ -80,6 +80,13 @@ pod 'NSR'
 		completionHandler();
 	}
 	```
+	and remember to implement also 
+	
+	```objc
+	- (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler  {
+		completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound);
+	}
+	```
 3. ### setSecurityDelegate *optional*
 	If the communications must be secured using any policy.  
 	A **securityDelegate** implementing the following protocol can be configured:
