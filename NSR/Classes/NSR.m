@@ -735,6 +735,12 @@ static BOOL _logDisabled = NO;
 	}
 }
 
+-(void)killPush:(NSString*) pid {
+	if (@available(iOS 10.0, *)) {
+		[[UNUserNotificationCenter currentNotificationCenter] removePendingNotificationRequestsWithIdentifiers:@[pid]];
+	}
+}
+
 -(void)showPush:(NSDictionary*)push {
 	[self showPush:@"NSR" push:push delay:1];
 }

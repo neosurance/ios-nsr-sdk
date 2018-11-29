@@ -38,7 +38,9 @@
 			[nsr showPush:body[@"push"]];
 		}
 	}
-
+	if(body[@"killPush"] != nil) {
+		[nsr killPush:body[@"id"]];
+	}
 	if(body[@"what"] != nil) {
 		if([@"continueInitJob" isEqualToString:body[@"what"]]) {
 			[nsr continueInitJob];

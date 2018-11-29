@@ -53,7 +53,8 @@
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)archiveEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
--(void)showPush:(NSString*) pid push:(NSDictionary*)push delay:(int)delay;
+-(void)showPush:(NSString*)pid push:(NSDictionary*)push delay:(int)delay;
+-(void)killPush:(NSString*)pid;
 -(void)showPush:(NSDictionary*)push;
 -(BOOL)forwardNotification:(UNNotificationResponse*) response API_AVAILABLE(ios(10.0));
 
