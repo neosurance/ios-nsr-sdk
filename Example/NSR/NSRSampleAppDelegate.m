@@ -13,14 +13,14 @@
 
 	UNUserNotificationCenter* center = [UNUserNotificationCenter currentNotificationCenter];
 	center.delegate = self;
-	UNAuthorizationOptions options = UNAuthorizationOptionAlert + UNAuthorizationOptionSound;
+	UNAuthorizationOptions options = UNAuthorizationOptionAlert | UNAuthorizationOptionSound;
 	[center requestAuthorizationWithOptions:options completionHandler:^(BOOL granted, NSError* _Nullable error) {}];
 	
 	return YES;
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center willPresentNotification:(UNNotification *)notification withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler  {
-	completionHandler(UNNotificationPresentationOptionAlert);
+	completionHandler(UNNotificationPresentationOptionAlert | UNNotificationPresentationOptionSound);
 }
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center didReceiveNotificationResponse:(UNNotificationResponse *)response withCompletionHandler:(void(^)(void))completionHandler  {

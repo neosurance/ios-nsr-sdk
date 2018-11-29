@@ -6,12 +6,25 @@
 
 @implementation NSR
 
+static BOOL _logDisabled = NO;
++(BOOL)logDisabled {
+	return _logDisabled;
+}
+
 -(NSString*)version {
-	return @"2.2.1";
+	return @"2.2.2";
 }
 
 -(NSString*)os {
 	return @"iOS";
+}
+
+-(BOOL)getBoolean:(NSDictionary*)dict key:(NSString*)key {
+	if(dict != nil && dict[key] != nil) {
+		return [dict[key] boolValue];
+	} else {
+		return NO;
+	}
 }
 
 +(id)sharedInstance {
@@ -26,10 +39,6 @@
 
 -(id)init {
 	if (self = [super init]) {
-		self.pushPlayer = [[AVAudioPlayer alloc] initWithContentsOfURL:[[self frameworkBundle] URLForResource:@"NSR_push" withExtension:@"wav"] error:nil];
-		self.pushPlayer.volume = 1;
-		self.pushPlayer.numberOfLoops = 0;
-		
 		self.stillLocationManager = nil;
 		self.locationManager = nil;
 		self.hardLocationManager = nil;
@@ -37,11 +46,7 @@
 		stillLocationSent = NO;
 		controllerWebView = nil;
 		eventWebView = nil;
-		
-		eventWebViewSynchTime = 0;
 		setupInited = NO;
-		
-		pushdelay = 0.1;
 	}
 	return self;
 }
@@ -53,11 +58,13 @@
 	[self stopHardTraceLocation];
 	[self stopTraceLocation];
 	[self stopTraceConnection];
-	NSDictionary* conf = [self getConf];
-	if (conf != nil && eventWebView == nil && [conf[@"local_tracking"] boolValue]) {
-		NSLog(@"Making NSREventWebView");
-		eventWebView = [[NSREventWebView alloc] init];
+	
+	if(![self synchEventWebView]){
+		[self continueInitJob];
 	}
+}
+
+-(void)continueInitJob {
 	[self traceConnection];
 	[self traceLocation];
 	[self hardTraceLocation];
@@ -65,7 +72,7 @@
 
 -(void)initStillLocation {
 	if(self.stillLocationManager == nil) {
-		NSLog(@"initStillLocation");
+		NSRLog(@"initStillLocation");
 		self.stillLocationManager = [[CLLocationManager alloc] init];
 		[self.stillLocationManager setAllowsBackgroundLocationUpdates:YES];
 		[self.stillLocationManager setPausesLocationUpdatesAutomatically:NO];
@@ -78,11 +85,10 @@
 
 -(void)initLocation {
 	if(self.locationManager == nil) {
-		NSLog(@"initLocation");
+		NSRLog(@"initLocation");
 		self.locationManager = [[CLLocationManager alloc] init];
 		[self.locationManager setAllowsBackgroundLocationUpdates:YES];
 		[self.locationManager setPausesLocationUpdatesAutomatically:NO];
-		[self.locationManager setDesiredAccuracy:kCLLocationAccuracyBest];
 		self.locationManager.delegate = self;
 		[self.locationManager requestAlwaysAuthorization];
 	}
@@ -90,7 +96,7 @@
 
 -(void)initHardLocation {
 	if(self.hardLocationManager == nil) {
-		NSLog(@"initHardLocation");
+		NSRLog(@"initHardLocation");
 		self.hardLocationManager = [[CLLocationManager alloc] init];
 		[self.hardLocationManager setAllowsBackgroundLocationUpdates:YES];
 		[self.hardLocationManager setPausesLocationUpdatesAutomatically:NO];
@@ -102,21 +108,23 @@
 
 -(void)traceLocation {
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+	if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
 		[self initLocation];
+		//[self.locationManager setDistanceFilter:500];
+		//[self.locationManager startUpdatingLocation];
 		[self.locationManager startMonitoringSignificantLocationChanges];
 	}
 }
 
 -(void)hardTraceLocation {
-	NSLog(@"hardTraceLocation");
+	NSRLog(@"hardTraceLocation");
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+	if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
 		if([self isHardTraceLocation]){
 			[self initHardLocation];
 			[self.hardLocationManager setDistanceFilter:[self getHardTraceMeters]];
 			[self.hardLocationManager startUpdatingLocation];
-			NSLog(@"hardTraceLocation reactivated");
+			NSRLog(@"hardTraceLocation reactivated");
 		}else{
 			[self stopHardTraceLocation];
 			[self setHardTraceEnd:0];
@@ -126,15 +134,15 @@
 
 -(void)stopHardTraceLocation {
 	if(self.hardLocationManager != nil){
-		NSLog(@"stopHardTraceLocation");
+		NSRLog(@"stopHardTraceLocation");
 		[self.hardLocationManager stopUpdatingLocation];
 	}
 }
 
 -(void)accurateLocation:(double)meters duration:(int)duration extend:(bool)extend {
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
-		NSLog(@"accurateLocation");
+	if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
+		NSRLog(@"accurateLocation");
 		[self initHardLocation];
 		if(![self isHardTraceLocation] || meters != [self getHardTraceMeters]) {
 			[self setHardTraceMeters:meters];
@@ -149,7 +157,7 @@
 }
 
 -(void)accurateLocationEnd {
-	NSLog(@"accurateLocationEnd");
+	NSRLog(@"accurateLocationEnd");
 	[self stopHardTraceLocation];
 	[self setHardTraceEnd:0];
 }
@@ -196,7 +204,7 @@
 
 
 -(void)stopTraceLocation {
-	NSLog(@"stopTraceLocation");
+	NSRLog(@"stopTraceLocation");
 	if(self.locationManager != nil){
 		[self.locationManager stopMonitoringSignificantLocationChanges];
 	}
@@ -204,7 +212,7 @@
 
 -(void)initActivity {
 	if(self.motionActivityManager == nil){
-		NSLog(@"initActivity");
+		NSRLog(@"initActivity");
 		self.motionActivityManager = [[CMMotionActivityManager alloc] init];
 		self.motionActivities = [[NSMutableArray alloc] init];
 	}
@@ -212,10 +220,10 @@
 
 -(void)traceActivity {
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"activity"][@"enabled"] boolValue]) {
+	if(conf != nil && [self getBoolean:conf[@"activity"] key:@"enabled"]) {
 		[self initActivity];
 		[self.motionActivityManager startActivityUpdatesToQueue:[NSOperationQueue mainQueue] withHandler:^(CMMotionActivity* activity) {
-			NSLog(@"traceActivity IN");
+			NSRLog(@"traceActivity IN");
 			[NSObject cancelPreviousPerformRequestsWithTarget: self selector:@selector(sendActivity) object: nil];
 			[self performSelector:@selector(sendActivity) withObject: nil afterDelay: 8];
 			if([self.motionActivities count] == 0) {
@@ -228,12 +236,12 @@
 }
 
 -(void)sendActivity {
-	NSLog(@"sendActivity");
+	NSRLog(@"sendActivity");
 	[self innerSendActivity];
 }
 
 -(void)recoveryActivity {
-	NSLog(@"recoveryActivity");
+	NSRLog(@"recoveryActivity");
 	[self innerSendActivity];
 }
 
@@ -248,7 +256,7 @@
 	NSString* candidate = nil;
 	int maxConfidence = 0;
 	for (CMMotionActivity* activity in self.motionActivities) {
-		NSLog(@"activity type %@ confidence %i", [self activityType:activity], [self activityConfidence:activity]);
+		NSRLog(@"activity type %@ confidence %i", [self activityType:activity], [self activityConfidence:activity]);
 		NSString* type = [self activityType:activity];
 		if(type != nil) {
 			int confidence = [confidences[type] intValue] + [self activityConfidence:activity];
@@ -267,17 +275,17 @@
 		maxConfidence = 100;
 	}
 	int minConfidence = [conf[@"activity"][@"confidence"] intValue];
-	NSLog(@"candidate %@", candidate);
-	NSLog(@"maxConfidence %i", maxConfidence);
-	NSLog(@"minConfidence %i", minConfidence);
-	NSLog(@"lastActivity %@", [self getLastActivity]);
+	NSRLog(@"candidate %@", candidate);
+	NSRLog(@"maxConfidence %i", maxConfidence);
+	NSRLog(@"minConfidence %i", minConfidence);
+	NSRLog(@"lastActivity %@", [self getLastActivity]);
 	if(candidate != nil && [candidate compare:[self getLastActivity]] != NSOrderedSame && maxConfidence >= minConfidence) {
 		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 		[payload setObject:candidate forKey:@"type"];
 		[payload setObject:[NSNumber numberWithInt:maxConfidence] forKey:@"confidence"];
 		[self setLastActivity:candidate];
 		[self crunchEvent:@"activity" payload:payload];
-		if([conf[@"position"][@"enabled"] boolValue] && !stillLocationSent && [candidate compare:@"still"] == NSOrderedSame) {
+		if([self getBoolean:conf[@"position"] key:@"enabled"] && !stillLocationSent && [candidate compare:@"still"] == NSOrderedSame) {
 			[self initStillLocation];
 			[self.stillLocationManager startUpdatingLocation];
 		}
@@ -322,9 +330,9 @@
 
 -(void)traceConnection {
 	NSDictionary* conf = [self getConf];
-	if(conf !=nil && [conf[@"connection"][@"enabled"] boolValue]) {
+	if(conf !=nil && [self getBoolean:conf[@"connection"] key:@"enabled"]) {
 		[[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
-			NSLog(@"traceConnection IN");
+			NSRLog(@"traceConnection IN");
 			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 			NSString* connection = nil;
 			if (status == AFNetworkReachabilityStatusReachableViaWiFi) {
@@ -337,7 +345,7 @@
 				[self crunchEvent:@"connection" payload:payload];
 				[self setLastConnection:connection];
 			}
-			NSLog(@"traceConnection: %@",connection);
+			NSRLog(@"traceConnection: %@",connection);
 			[self opportunisticTrace];
 		}];
 		[[AFNetworkReachabilityManager sharedManager] startMonitoring];
@@ -345,7 +353,7 @@
 }
 
 -(void)stopTraceConnection {
-	NSLog(@"stopTraceConnection");
+	NSRLog(@"stopTraceConnection");
 	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
 }
 
@@ -360,7 +368,7 @@
 
 -(void)tracePower {
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"power"][@"enabled"] boolValue]) {
+	if(conf != nil && [self getBoolean:conf[@"power"] key:@"enabled"]) {
 		UIDevice* currentDevice = [UIDevice currentDevice];
 		[currentDevice setBatteryMonitoringEnabled:YES];
 		UIDeviceBatteryState batteryState = [currentDevice batteryState];
@@ -457,9 +465,11 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"setup");
+	_logDisabled = [self getBoolean:settings key:@"disable_log"];
+	
+	NSRLog(@"setup");
 	NSMutableDictionary* mutableSettings = [[NSMutableDictionary alloc] initWithDictionary:settings];
-	NSLog(@"%@", mutableSettings);
+	NSRLog(@"%@", mutableSettings);
 	if(mutableSettings[@"ns_lang"] == nil) {
 		NSString * language = [[NSLocale preferredLanguages] firstObject];
 		NSDictionary *languageDic = [NSLocale componentsFromLocaleIdentifier:language];
@@ -492,14 +502,14 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"registerUser %@", [user toDict:YES]);
+	NSRLog(@"registerUser %@", [user toDict:YES]);
 	[self forgetUser];
 	[self setUser:user];
 	
 	[self authorize:^(BOOL authorized) {
-		NSLog(@"registerUser %@authorized", authorized?@"":@"not ");
-		if(authorized && [[self getConf][@"send_user"] boolValue]){
-			NSLog(@"sendUser");
+		NSRLog(@"registerUser %@authorized", authorized?@"":@"not ");
+		if(authorized && [self getBoolean:[self getConf] key:@"send_user"]){
+			NSRLog(@"sendUser");
 			NSMutableDictionary* devicePayLoad = [[NSMutableDictionary alloc] init];
 			[devicePayLoad setObject:[self uuid] forKey:@"uid"];
 			NSString* pushToken = [self getPushToken];
@@ -523,7 +533,7 @@
 	
 			[self.securityDelegate secureRequest:@"register" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
 				if (error != nil) {
-					NSLog(@"sendUser %@", error);
+					NSRLog(@"sendUser %@", error);
 				}
 			}];
 		}
@@ -534,9 +544,9 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"sendAction action %@", action);
-	NSLog(@"sendAction policyCode %@", code);
-	NSLog(@"sendAction details %@", details);
+	NSRLog(@"sendAction action %@", action);
+	NSRLog(@"sendAction policyCode %@", code);
+	NSRLog(@"sendAction details %@", details);
 	
 	[self authorize:^(BOOL authorized) {
 		if(!authorized){
@@ -556,34 +566,43 @@
 		
 		[self.securityDelegate secureRequest:@"action" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
 			if (error == nil) {
-				NSLog(@"sendAction %@", responseObject);
+				NSRLog(@"sendAction %@", responseObject);
 			} else {
-				NSLog(@"sendAction %@", error);
+				NSRLog(@"sendAction %@", error);
 			}
 		}];
 	}];
 }
 
 -(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
-	NSDictionary* conf = [self getConf];
-	if (conf != nil && conf[@"local_tracking"] != nil && [conf[@"local_tracking"] boolValue]) {
-		NSLog(@"crunchEvent event %@", event);
-		NSLog(@"crunchEvent payload %@", payload);
-		[self snapshot:event payload:payload];
-		if (eventWebView != nil) {
-			[eventWebView crunchEvent:event payload:payload];
-		}
-	} else {
+	if (![self localCrunchEvent:event payload:payload]) {
 		[self sendEvent:event payload:payload];
 	}
+}
+
+-(BOOL)localCrunchEvent:(NSString *)event payload:(NSDictionary *)payload {
+	NSDictionary* conf = [self getConf];
+	if ([self getBoolean:conf key:@"local_tracking"]) {
+		NSRLog(@"crunchEvent event %@", event);
+		NSRLog(@"crunchEvent payload %@", payload);
+		[self snapshot:event payload:payload];
+		if (eventWebView == nil) {
+			NSRLog(@"crunchEvent Making NSREventWebView");
+			eventWebView = [[NSREventWebView alloc] init];
+		}
+		NSRLog(@"crunchEvent call eventWebView");
+		[eventWebView crunchEvent:event payload:payload];
+		return YES;
+	}
+	return NO;
 }
 
 -(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"sendEvent event %@", event);
-	NSLog(@"sendEvent payload %@", payload);
+	NSRLog(@"sendEvent event %@", event);
+	NSRLog(@"sendEvent payload %@", payload);
 	
 	[self authorize:^(BOOL authorized) {
 		if(!authorized){
@@ -613,7 +632,7 @@
 		[requestPayload setObject:eventPayload forKey:@"event"];
 		[requestPayload setObject:[[self getUser] toDict:NO] forKey:@"user"];
 		[requestPayload setObject:devicePayLoad forKey:@"device"];
-		if([[self getConf][@"send_snapshot"] boolValue]) {
+		if([self getBoolean:[self getConf] key:@"send_snapshot"]) {
 			[requestPayload setObject:[self snapshot] forKey:@"snapshot"];
 		}
 		
@@ -623,11 +642,11 @@
 		
 		[self.securityDelegate secureRequest:@"event" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
 			if (error == nil) {
-				BOOL skipPush = (responseObject[@"skipPush"] != nil && [responseObject[@"skipPush"] boolValue]);
 				NSArray* pushes = responseObject[@"pushes"];
-				if(!skipPush) {
+				if(![self getBoolean:responseObject key:@"skipPush"]) {
 					if([pushes count] > 0){
 						[self showPush: pushes[0]];
+						[self localCrunchEvent:@"pushed" payload:pushes[0]];
 					}
 				} else {
 					if([pushes count] > 0){
@@ -635,7 +654,7 @@
 					}
 				}
 			} else {
-				NSLog(@"sendEvent %@", error);
+				NSRLog(@"sendEvent %@", error);
 			}
 		}];
 	}];
@@ -645,8 +664,8 @@
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"archiveEvent event %@", event);
-	NSLog(@"archiveEvent payload %@", payload);
+	NSRLog(@"archiveEvent event %@", event);
+	NSRLog(@"archiveEvent payload %@", payload);
 	
 	[self authorize:^(BOOL authorized) {
 		if(!authorized){
@@ -676,7 +695,7 @@
 		
 		[self.securityDelegate secureRequest:@"archiveEvent" payload:requestPayload headers:headers completionHandler:^(NSDictionary *responseObject, NSError *error) {
 			if (error != nil) {
-				NSLog(@"sendEvent %@", error);
+				NSRLog(@"sendEvent %@", error);
 			}
 		}];
 	}];
@@ -695,7 +714,7 @@
 	return NO;
 }
 
--(void)showPush:(NSDictionary*)push {
+-(void)showPush:(NSString*) pid push:(NSDictionary*)push delay:(int)delay {
 	if (@available(iOS 10.0, *)) {
 		NSMutableDictionary* mPush = [[NSMutableDictionary alloc] initWithDictionary:push];
 		[mPush setObject:@"NSR" forKey:@"provider"];
@@ -703,16 +722,21 @@
 		[content setTitle:mPush[@"title"]];
 		[content setBody:mPush[@"body"]];
 		[content setUserInfo:mPush];
-		if(pushdelay == 0.1 && [[UIApplication sharedApplication] applicationState] == UIApplicationStateActive) {
-			[self.pushPlayer play];
-		} else {
-			[content setSound:[UNNotificationSound soundNamed:@"NSR_push.wav"]];
-		}
-		UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:pushdelay repeats:NO];
-		pushdelay = 0.1;
-		UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:[NSString stringWithFormat:@"NSR%@", [NSDate date]] content:content trigger:trigger];
-		[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
+		[content setSound:[UNNotificationSound soundNamed:@"NSR_push.wav"]];
+		UNTimeIntervalNotificationTrigger* trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:delay repeats:NO];
+		NSRLog(@"push delegate %@", [[UNUserNotificationCenter currentNotificationCenter] delegate]);
+		
+		UNNotificationRequest* request = [UNNotificationRequest requestWithIdentifier:pid content:content trigger:trigger];
+		[[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:^(NSError * _Nullable error) {
+			if (error != nil) {
+				NSRLog(@"push error! %@", error.localizedDescription);
+			}
+		}];
 	}
+}
+
+-(void)showPush:(NSDictionary*)push {
+	[self showPush:@"NSR" push:push delay:1];
 }
 
 -(void)setUser:(NSRUser*) user{
@@ -811,7 +835,7 @@
 			[sdkPayload setObject:[self os] forKey:@"os"];
 			[payload setObject:sdkPayload forKey:@"sdk"];
 			
-			NSLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
+			NSRLog(@"security delegate: %@", [[NSR sharedInstance] securityDelegate]);
 			[self.securityDelegate secureRequest:@"authorize" payload:payload headers:nil completionHandler:^(NSDictionary *responseObject, NSError *error) {
 				if (error) {
 					completionHandler(NO);
@@ -819,23 +843,22 @@
 					NSDictionary* response = [[NSMutableDictionary alloc] initWithDictionary:responseObject];
 					
 					NSDictionary* auth = response[@"auth"];
-					NSLog(@"authorize auth: %@", auth);
+					NSRLog(@"authorize auth: %@", auth);
 					[self setAuth:auth];
 					
 					NSDictionary* oldConf = [self getConf];
 					NSDictionary* conf = response[@"conf"];
-					NSLog(@"authorize conf: %@", conf);
+					NSRLog(@"authorize conf: %@", conf);
 					[self setConf:conf];
 					
 					NSString* appUrl = response[@"app_url"];
-					NSLog(@"authorize appUrl: %@", appUrl);
+					NSRLog(@"authorize appUrl: %@", appUrl);
 					[self setAppUrl:appUrl];
 					
 					if([self needsInitJob:conf oldConf:oldConf]){
-						NSLog(@"authorize needsInitJob");
+						NSRLog(@"authorize needsInitJob");
 						[self initJob];
-					}
-					if(conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]){
+					} else {
 						[self synchEventWebView];
 					}
 					completionHandler(YES);
@@ -845,33 +868,36 @@
 	}
 }
 
--(void)synchEventWebView {
-	long t = [[NSDate date] timeIntervalSince1970];
-	if(eventWebView != nil && t - eventWebViewSynchTime > (60*60*8)){
-		[eventWebView synch];
+-(BOOL)synchEventWebView {
+	if ([self getBoolean:[self getConf] key:@"local_tracking"]) {
+		if(eventWebView == nil) {
+			NSRLog(@"Making NSREventWebView");
+			eventWebView = [[NSREventWebView alloc] init];
+			return YES;
+		} else {
+			[eventWebView synch];
+		}
+	}else {
+		eventWebView = nil;
 	}
-}
-
--(void)eventWebViewSynched {
-	eventWebViewSynchTime = [[NSDate date] timeIntervalSince1970];
+	return NO;
 }
 
 -(void)resetCruncher {
-	eventWebViewSynchTime = 0;
 	if (eventWebView != nil) {
 		[eventWebView reset];
 	}
 }
 
 -(BOOL)needsInitJob:(NSDictionary*)conf oldConf:(NSDictionary*)oldConf {
-	return (oldConf == nil ||	![conf isEqualToDictionary:oldConf] || (eventWebView == nil && conf[@"local_tracking"] && [conf[@"local_tracking"] boolValue]));
+	return (oldConf == nil ||	![conf isEqualToDictionary:oldConf] || (eventWebView == nil && [self getBoolean:conf key:@"local_tracking"]));
 }
 
 -(void)forgetUser {
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSLog(@"forgetUser");
+	NSRLog(@"forgetUser");
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_conf"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_auth"];
 	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_appUrl"];
@@ -897,7 +923,7 @@
 }
 
 -(void)showUrl:(NSString*)url params:(NSDictionary*)params {
-	NSLog(@"showUrl %@, %@", url, params);
+	NSRLog(@"showUrl %@, %@", url, params);
 	if(params != nil) {
 		for (NSString* key in params) {
 			NSString* value = [NSString stringWithFormat:@"%@", [params objectForKey:key]];
@@ -950,7 +976,7 @@
 
 -(NSString*) uuid {
 	NSString* uuid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
-	NSLog(@"uuid: %@", uuid);
+	NSRLog(@"uuid: %@", uuid);
 	return uuid;
 }
 
@@ -992,9 +1018,9 @@
 	[self opportunisticTrace];
 	[self checkHardTraceLocation];
 	CLLocation *newLocation = [locations lastObject];
-	NSLog(@"enter didUpdateToLocation");
+	NSRLog(@"enter didUpdateToLocation");
 	NSDictionary* conf = [self getConf];
-	if(conf != nil && [conf[@"position"][@"enabled"] boolValue]) {
+	if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
 		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
 		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
 		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
@@ -1002,11 +1028,11 @@
 		[self crunchEvent:@"position" payload:payload];
 		stillLocationSent = (manager == self.stillLocationManager);
 	}
-	NSLog(@"didUpdateToLocation exit");
+	NSRLog(@"didUpdateToLocation exit");
 }
 
 - (void) locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
-	NSLog(@"didFailWithError");
+	NSRLog(@"didFailWithError");
 }
 
 -(BOOL)gracefulDegradate {
@@ -1015,10 +1041,6 @@
 	}else {
 		return YES;
 	}
-}
-
--(void)setPushDelay:(double)t {
-	pushdelay = (t > 0) ? t: 0.1;
 }
 
 -(void)loginExecuted:(NSString*) url {

@@ -68,10 +68,10 @@
 -(void)registerUser {
 	NSLog(@"Register User");
 	NSRUser* user = [[NSRUser alloc] init];
-	user.email = @"Pippo1@neosurance.eu";
-	user.code = @"Pippo1@neosurance.eu";
-	user.firstname = @"Pippo1";
-	user.lastname = @"Pippo1";
+	user.email = @"Pippo2@neosurance.eu";
+	user.code = @"Pippo2@neosurance.eu";
+	user.firstname = @"Pippo2";
+	user.lastname = @"Pippo2";
 	NSMutableDictionary* locals =[[NSMutableDictionary alloc] init];
 	[locals setValue:@"<push_token>" forKey:@"pushToken"];
 	[locals setValue:@"giovanni.tigli@gmail.com" forKey:@"email"];
@@ -119,11 +119,11 @@
 	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
 	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-	[settings setObject:@"<code>" forKey:@"code"];
-	[settings setObject:@"<secret_key>" forKey:@"secret_key"];
+	[settings setObject:@"nsr" forKey:@"code"];
+	[settings setObject:@"VI7bHkQ5JhG2TeYQYe" forKey:@"secret_key"];
 
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
-	
+
 	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
 	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
 	

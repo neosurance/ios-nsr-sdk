@@ -35,7 +35,7 @@
 	NSDictionary *body = (NSDictionary*)message.body;
 	NSR* nsr = [NSR sharedInstance];
 	if(body[@"log"] != nil) {
-		NSLog(@"%@",body[@"log"]);
+		NSRLog(@"%@",body[@"log"]);
 	}
 	if(body[@"event"] != nil && body[@"payload"] != nil) {
 		[nsr sendEvent:body[@"event"] payload:body[@"payload"]];
@@ -189,7 +189,7 @@
 
 -(void)locationManager:(CLLocationManager*)manager didUpdateLocations:(NSArray *)locations {
 	if([locations count] > 0){
-		NSLog(@"didUpdateToLocation");
+		NSRLog(@"didUpdateToLocation");
 		[manager stopUpdatingLocation];
 		if(self.locationCallBack != nil){
 			CLLocation* loc = [locations lastObject];
@@ -200,7 +200,7 @@
 }
 
 -(void)locationManager:(CLLocationManager*)manager didFailWithError:(NSError *)error {
-	NSLog(@"didFailWithError");
+	NSRLog(@"didFailWithError");
 }
 
 -(BOOL)shouldAutorotate {
@@ -242,7 +242,7 @@
 }
 
 -(void)close {
-	NSLog(@"%s", __FUNCTION__);
+	NSRLog(@"%s", __FUNCTION__);
 	[[NSR sharedInstance] clearWebView];
 	[self dismissViewControllerAnimated:YES completion:^(){
 		[self.webView stopLoading];

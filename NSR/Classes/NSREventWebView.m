@@ -5,10 +5,13 @@
 
 -(id)init {
 	if (self = [super init]) {
+		NSR* nsr = [NSR sharedInstance];
 		self.webConfiguration = [[WKWebViewConfiguration alloc] init];
 		[self.webConfiguration.userContentController addScriptMessageHandler:self name:@"app"];
 		self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:self.webConfiguration];
-		[self.webView loadRequest:[[NSURLRequest alloc] initWithURL:[[[NSR sharedInstance] frameworkBundle] URLForResource:@"eventCrucher" withExtension:@"html"]]];
+		NSURL* rurl = [[nsr frameworkBundle] URLForResource:@"eventCrucher" withExtension:@"html"];
+		NSURL* url = [NSURL URLWithString:[NSString stringWithFormat:@"%@?ns_lang=%@&ns_log=%@", rurl ,[nsr getLang],[NSR logDisabled]?@"false":@"true"]];
+		[self.webView loadRequest:[[NSURLRequest alloc] initWithURL:url]];
 	}
 	return self;
 }
@@ -17,7 +20,7 @@
 	NSDictionary *body = (NSDictionary*)message.body;
 	NSR* nsr = [NSR sharedInstance];
 	if(body[@"log"] != nil) {
-		NSLog(@"%@",body[@"log"]);
+		NSRLog(@"%@",body[@"log"]);
 	}
 	if(body[@"event"] != nil && body[@"payload"] != nil) {
 		[nsr sendEvent:body[@"event"] payload:body[@"payload"]];
@@ -28,9 +31,17 @@
 	if(body[@"action"] != nil) {
 		[nsr sendAction:body[@"action"] policyCode:body[@"code"] details:body[@"details"]];
 	}
+	if(body[@"push"] != nil) {
+		if(body[@"delay"] != nil) {
+			[nsr showPush:(body[@"id"] != nil)?body[@"id"]:[NSString stringWithFormat:@"%f",[[NSDate date] timeIntervalSince1970]] push:body[@"push"] delay:[body[@"delay"] intValue]];
+		}else{
+			[nsr showPush:body[@"push"]];
+		}
+	}
+
 	if(body[@"what"] != nil) {
-		if([@"init" isEqualToString:body[@"synched"]]) {
-			[nsr eventWebViewSynched];
+		if([@"continueInitJob" isEqualToString:body[@"what"]]) {
+			[nsr continueInitJob];
 		}
 		if([@"init" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[nsr authorize:^(BOOL authorized) {
@@ -53,15 +64,6 @@
 		}
 		if([@"user" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:[[nsr getUser] toDict:YES]]]];
-		}
-		if([@"push" isEqualToString:body[@"what"]] && body[@"title"] != nil && body[@"body"] != nil) {
-			NSMutableDictionary* push = [[NSMutableDictionary alloc] init];
-			[push setObject:body[@"title"] forKey:@"title"];
-			[push setObject:body[@"body"] forKey:@"body"];
-			if(body[@"url"] != nil){
-				[push setObject:body[@"url"] forKey:@"url"];
-			}
-			[nsr showPush:push];
 		}
 		if([@"geoCode" isEqualToString:body[@"what"]] && body[@"location"] != nil && body[@"callBack"] != nil) {
 			CLGeocoder* geocoder = [[CLGeocoder alloc] init];
@@ -111,7 +113,7 @@
 			}];
 		}
 		if([@"accurateLocation" isEqualToString:body[@"what"]] && body[@"meters"] != nil && body[@"duration"] != nil) {
-			bool extend = (body[@"extend"] != nil && [body[@"extend"] boolValue]);
+			bool extend = [nsr getBoolean:body key:@"extend"];
 			[nsr accurateLocation:[body[@"meters"] doubleValue] duration:(int)[body[@"duration"] integerValue] extend:extend];
 		}
 		if([@"accurateLocationEnd" isEqualToString:body[@"what"]]) {
@@ -121,11 +123,11 @@
 }
 
 -(void) synch {
-	[self eval:@"synch()"];
+	[self eval:@"EVC.synch()"];
 }
 
 -(void) reset {
-	[self eval:@"localStorage.clear();synch()"];
+	[self eval:@"localStorage.clear();EVC.synch()"];
 }
 
 -(void) crunchEvent:(NSString*)event payload:(NSDictionary*)payload {
@@ -133,7 +135,7 @@
 	NSMutableDictionary* nsrEvent = [[NSMutableDictionary alloc] init];
 	[nsrEvent setObject:event forKey:@"event"];
 	[nsrEvent setObject:payload forKey:@"payload"];
-	[self	eval:[NSString stringWithFormat:@"crunchEvent(%@)", [nsr dictToJson:nsrEvent]]];
+	[self	eval:[NSString stringWithFormat:@"EVC.innerCrunchEvent(%@)", [nsr dictToJson:nsrEvent]]];
 }
 
 -(void)eval:(NSString*)javascript {
@@ -141,4 +143,5 @@
 		[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
 	});
 }
+
 @end

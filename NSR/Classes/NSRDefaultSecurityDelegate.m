@@ -4,7 +4,7 @@
 
 -(void)secureRequest:(NSString*)endpoint payload:(NSDictionary*)payload headers:(NSDictionary*)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler {
 	NSString* url = [[[NSR sharedInstance] getSettings][@"base_url"] stringByAppendingFormat:@"%@", endpoint];
-	NSLog(@"%@", url);
+	NSRLog(@"%@", url);
 	AFJSONRequestSerializer *serializer = [AFJSONRequestSerializer serializer];
 	AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
 	if(headers != nil) {
@@ -21,10 +21,10 @@
 	NSDictionary *parameters = [NSJSONSerialization JSONObjectWithData:jsonData options:0 error:&error];
 	
 	[manager POST:url parameters:parameters progress:nil success:^(NSURLSessionDataTask *task, id responseObject) {
-		NSLog(@"Response: %@", responseObject);
+		NSRLog(@"Response: %@", responseObject);
 		completionHandler(responseObject, nil);
 	} failure:^(NSURLSessionDataTask *task, NSError *error) {
-		NSLog(@"Error: %@", error);
+		NSRLog(@"Error: %@", error);
 		completionHandler(nil, error);
 	}];
 }

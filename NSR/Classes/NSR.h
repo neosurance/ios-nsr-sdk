@@ -3,12 +3,12 @@
 #import <CoreMotion/CoreMotion.h>
 #import <UserNotifications/UserNotifications.h>
 #import <AFNetworking/AFNetworking.h>
-#import <AVFoundation/AVFoundation.h>
-#import <AudioToolbox/AudioToolbox.h>
 #import <sys/utsname.h>
 #import "NSREventWebView.h"
 #import "NSRControllerWebView.h"
 #import "NSRUser.h"
+
+#define NSRLog if(![NSR logDisabled]) NSLog
 
 @protocol NSRSecurityDelegate<NSObject>
 -(void)secureRequest:(NSString* _Nullable)endpoint payload:(NSDictionary* _Nullable)payload headers:(NSDictionary* _Nullable)headers completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
@@ -23,20 +23,19 @@
 @interface NSR:NSObject<CLLocationManagerDelegate> {
 	NSRControllerWebView* controllerWebView;
 	NSREventWebView* eventWebView;
-	long eventWebViewSynchTime;
 	BOOL stillLocationSent;
 	BOOL setupInited;
-	double pushdelay;
 }
 @property(nonatomic, strong) CLLocationManager* locationManager;
 @property(nonatomic, strong) CLLocationManager* hardLocationManager;
 @property(nonatomic, strong) CLLocationManager* stillLocationManager;
 @property(nonatomic, strong) CMMotionActivityManager* motionActivityManager;
-@property(nonatomic, strong) AVAudioPlayer* pushPlayer;
 @property(nonatomic, strong) id <NSRSecurityDelegate> securityDelegate;
 @property(nonatomic, strong) id <NSRWorkflowDelegate> workflowDelegate;
 @property(nonatomic, strong) NSMutableArray* motionActivities;
 
+-(BOOL)getBoolean:(NSDictionary*)dict key:(NSString*)key;
++(BOOL)logDisabled;
 +(id)sharedInstance;
 -(void)setup:(NSDictionary*)settings;
 -(void)forgetUser;
@@ -54,6 +53,7 @@
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)archiveEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
+-(void)showPush:(NSString*) pid push:(NSDictionary*)push delay:(int)delay;
 -(void)showPush:(NSDictionary*)push;
 -(BOOL)forwardNotification:(UNNotificationResponse*) response API_AVAILABLE(ios(10.0));
 
@@ -74,9 +74,8 @@
 -(void)registerWebView:(NSRControllerWebView*)controllerWebView;
 -(void)clearWebView;
 
--(void)eventWebViewSynched;
 -(void)resetCruncher;
 
--(void)setPushDelay:(double) t;
+-(void)continueInitJob;
 
 @end
