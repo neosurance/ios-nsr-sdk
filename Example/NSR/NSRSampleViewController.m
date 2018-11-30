@@ -68,20 +68,11 @@
 -(void)registerUser {
 	NSLog(@"Register User");
 	NSRUser* user = [[NSRUser alloc] init];
-	user.email = @"Pippo2@neosurance.eu";
-	user.code = @"Pippo2@neosurance.eu";
-	user.firstname = @"Pippo2";
-	user.lastname = @"Pippo2";
-	NSMutableDictionary* locals =[[NSMutableDictionary alloc] init];
-	[locals setValue:@"<push_token>" forKey:@"pushToken"];
-	[locals setValue:@"giovanni.tigli@gmail.com" forKey:@"email"];
-	[locals setValue:@"mario" forKey:@"firstname"];
-	[locals setValue:@"rossi" forKey:@"lastname"];
-	[locals setValue:@"tglgnn69a28g273e" forKey:@"fiscalCode"];
-	[locals setValue:@"via binda, 12" forKey:@"address"];
-	[locals setValue:@"Forlì" forKey:@"city"];
-	[locals setValue:@"FC" forKey:@"stateProvince"];
-	user.locals = locals;
+	user.email = @"<user>@neosurance.eu";
+	user.code = @"<user>@neosurance.eu";
+	user.firstname = @"<user>";
+	user.lastname = @"<user>";
+
 	[[NSR sharedInstance] registerUser:user];
 }
 
@@ -119,8 +110,8 @@
 	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
 	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-	[settings setObject:@"nsr" forKey:@"code"];
-	[settings setObject:@"VI7bHkQ5JhG2TeYQYe" forKey:@"secret_key"];
+	[settings setObject:@"<code>" forKey:@"code"];
+	[settings setObject:@"<secret_key>" forKey:@"secret_key"];
 
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
 
