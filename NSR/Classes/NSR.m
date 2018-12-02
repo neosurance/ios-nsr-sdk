@@ -12,7 +12,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.2";
+	return @"2.2.3";
 }
 
 -(NSString*)os {
@@ -503,7 +503,7 @@ static BOOL _logDisabled = NO;
 		return;
 	}
 	NSRLog(@"registerUser %@", [user toDict:YES]);
-	[self forgetUser];
+	[[NSUserDefaults standardUserDefaults] removeObjectForKey:@"NSR_auth"];
 	[self setUser:user];
 	
 	[self authorize:^(BOOL authorized) {
@@ -885,7 +885,8 @@ static BOOL _logDisabled = NO;
 		} else {
 			[eventWebView synch];
 		}
-	}else {
+	}else if(eventWebView != nil) {
+		[eventWebView close];
 		eventWebView = nil;
 	}
 	return NO;

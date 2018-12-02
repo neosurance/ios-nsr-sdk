@@ -142,8 +142,18 @@
 
 -(void)eval:(NSString*)javascript {
 	dispatch_async(dispatch_get_main_queue(), ^(void){
-		[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+		if(self.webView != nil){
+			[self.webView evaluateJavaScript:javascript completionHandler:^(id result, NSError *error) {}];
+		}
 	});
+}
+
+-(void)close {
+	if(self.webView != nil){
+		[self.webView stopLoading];
+		[self.webView setNavigationDelegate: nil];
+		[self setWebView:nil];
+	}
 }
 
 @end
