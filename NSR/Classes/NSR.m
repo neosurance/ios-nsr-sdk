@@ -12,7 +12,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.3";
+	return @"2.2.5";
 }
 
 -(NSString*)os {
@@ -575,26 +575,27 @@ static BOOL _logDisabled = NO;
 }
 
 -(void)crunchEvent:(NSString *)event payload:(NSDictionary *)payload {
-	if (![self localCrunchEvent:event payload:payload]) {
-		[self sendEvent:event payload:payload];
+	if([self gracefulDegradate]) {
+		return;
 	}
-}
-
--(BOOL)localCrunchEvent:(NSString *)event payload:(NSDictionary *)payload {
 	NSDictionary* conf = [self getConf];
 	if ([self getBoolean:conf key:@"local_tracking"]) {
 		NSRLog(@"crunchEvent event %@", event);
 		NSRLog(@"crunchEvent payload %@", payload);
 		[self snapshot:event payload:payload];
-		if (eventWebView == nil) {
-			NSRLog(@"crunchEvent Making NSREventWebView");
-			eventWebView = [[NSREventWebView alloc] init];
-		}
-		NSRLog(@"crunchEvent call eventWebView");
-		[eventWebView crunchEvent:event payload:payload];
-		return YES;
+		[self localCrunchEvent:event payload:payload];
+	}else{
+		[self sendEvent:event payload:payload];
 	}
-	return NO;
+}
+
+-(void)localCrunchEvent:(NSString *)event payload:(NSDictionary *)payload {
+	if (eventWebView == nil) {
+		NSRLog(@"localCrunchEvent Making NSREventWebView");
+		eventWebView = [[NSREventWebView alloc] init];
+	}
+	NSRLog(@"localCrunchEvent call eventWebView");
+	[eventWebView crunchEvent:event payload:payload];
 }
 
 -(void)sendEvent:(NSString *)event payload:(NSDictionary *)payload {
