@@ -9,7 +9,7 @@
 		self.webConfiguration = [[WKWebViewConfiguration alloc] init];
 		[self.webConfiguration.userContentController addScriptMessageHandler:self name:@"app"];
 		self.webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:self.webConfiguration];
-		NSURL* rurl = [[nsr frameworkBundle] URLForResource:@"eventCrucher" withExtension:@"html"];
+		NSURL* rurl = [[nsr frameworkBundle] URLForResource:@"eventCruncher" withExtension:@"html"];
 		NSURL* url = [NSURL URLWithString:[NSString stringWithFormat:@"%@?ns_lang=%@&ns_log=%@", rurl ,[nsr getLang],[NSR logDisabled]?@"false":@"true"]];
 		[self.webView loadRequest:[[NSURLRequest alloc] initWithURL:url]];
 	}
