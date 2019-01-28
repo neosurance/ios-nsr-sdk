@@ -12,7 +12,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.5";
+	return @"2.2.8";
 }
 
 -(NSString*)os {
@@ -1022,27 +1022,36 @@ static BOOL _logDisabled = NO;
 }
 
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
-	if(manager == self.stillLocationManager) {
-		[manager stopUpdatingLocation];
+	@try {
+		if(manager == self.stillLocationManager) {
+			[manager stopUpdatingLocation];
+		}
+		[self opportunisticTrace];
+		[self checkHardTraceLocation];
+		CLLocation *newLocation = [locations lastObject];
+		NSRLog(@"enter didUpdateToLocation");
+		NSDictionary* conf = [self getConf];
+		if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
+			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
+			[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
+			[payload setObject:[NSNumber numberWithFloat:newLocation.altitude] forKey:@"altitude"];
+			[self crunchEvent:@"position" payload:payload];
+			stillLocationSent = (manager == self.stillLocationManager);
+		}
+		NSRLog(@"didUpdateToLocation exit");
 	}
-	[self opportunisticTrace];
-	[self checkHardTraceLocation];
-	CLLocation *newLocation = [locations lastObject];
-	NSRLog(@"enter didUpdateToLocation");
-	NSDictionary* conf = [self getConf];
-	if(conf != nil && [self getBoolean:conf[@"position"] key:@"enabled"]) {
-		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.latitude] forKey:@"latitude"];
-		[payload setObject:[NSNumber numberWithFloat:newLocation.coordinate.longitude] forKey:@"longitude"];
-		[payload setObject:[NSNumber numberWithFloat:newLocation.altitude] forKey:@"altitude"];
-		[self crunchEvent:@"position" payload:payload];
-		stillLocationSent = (manager == self.stillLocationManager);
+	@catch (NSException *exception) {
+		NSRLog(@"didUpdateToLocation error");
 	}
-	NSRLog(@"didUpdateToLocation exit");
 }
 
 - (void) locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
 	NSRLog(@"didFailWithError");
+}
+
+- (void)locationManager:(CLLocationManager *)manager didFinishDeferredUpdatesWithError:(NSError *)error{
+	NSRLog(@"didFinishDeferredUpdatesWithError");
 }
 
 -(BOOL)gracefulDegradate {
