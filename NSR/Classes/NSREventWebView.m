@@ -72,7 +72,7 @@
 				CLGeocoder* geocoder = [[CLGeocoder alloc] init];
 				CLLocation* location = [[CLLocation alloc] initWithLatitude:[body[@"location"][@"latitude"] doubleValue] longitude:[body[@"location"][@"longitude"] doubleValue]];
 				[geocoder reverseGeocodeLocation:location completionHandler:^(NSArray* placemarks, NSError* error){
-					if(error != nil && placemarks != nil && [placemarks count] > 0) {
+					if(error == nil && placemarks != nil && [placemarks count] > 0) {
 						CLPlacemark* placemark= placemarks[0];
 						NSMutableDictionary* address = [[NSMutableDictionary alloc] init];
 						[address setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
