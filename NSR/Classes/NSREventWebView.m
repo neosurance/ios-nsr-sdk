@@ -72,14 +72,22 @@
 				CLGeocoder* geocoder = [[CLGeocoder alloc] init];
 				CLLocation* location = [[CLLocation alloc] initWithLatitude:[body[@"location"][@"latitude"] doubleValue] longitude:[body[@"location"][@"longitude"] doubleValue]];
 				[geocoder reverseGeocodeLocation:location completionHandler:^(NSArray* placemarks, NSError* error){
-					if(error == nil && placemarks != nil && [placemarks count] > 0) {
-						CLPlacemark* placemark= placemarks[0];
-						NSMutableDictionary* address = [[NSMutableDictionary alloc] init];
-						[address setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
-						[address setObject:[placemark country] forKey:@"countryName"];
-						NSString* addressString = [[placemark addressDictionary][@"FormattedAddressLines"] componentsJoinedByString:@", "];
-						[address setObject:addressString forKey:@"address"];
-						[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:address]]];
+					@try {
+						if(error == nil && placemarks != nil && [placemarks count] > 0) {
+							CLPlacemark* placemark= placemarks[0];
+							if([placemark ISOcountryCode] != nil && [placemark country] != nil) {
+								NSMutableDictionary* address = [[NSMutableDictionary alloc] init];
+								[address setObject:[placemark ISOcountryCode] forKey:@"countryCode"];
+								[address setObject:[placemark country] forKey:@"countryName"];
+								if([placemark addressDictionary] != nil && [placemark addressDictionary][@"FormattedAddressLines"] != nil){
+									NSString* addressString = [[placemark addressDictionary][@"FormattedAddressLines"] componentsJoinedByString:@", "];
+									[address setObject:addressString forKey:@"address"];
+								}
+								[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], [nsr dictToJson:address]]];
+							}
+						}
+					}@catch (NSException *exception) {
+						NSRLog(@"NSREventWebView geoCode error %@", exception.reason);
 					}
 				}];
 			}
