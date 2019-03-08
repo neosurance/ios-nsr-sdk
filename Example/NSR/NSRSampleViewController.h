@@ -5,5 +5,6 @@
 
 @property(strong, nonatomic) NSRWebView* webView;
 @property(strong, nonatomic) WKWebViewConfiguration* webConfiguration;
+@property(strong, nonatomic) NSDictionary* config;
 
 @end

@@ -6,6 +6,9 @@
 
 -(void)loadView {
 	[super loadView];
+
+	self.config = [NSDictionary dictionaryWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"config" ofType:@"plist"]];
+
 	[self setup];
 
 	self.webConfiguration = [[WKWebViewConfiguration alloc] init];
@@ -62,22 +65,43 @@
 		if([@"resetCruncher" isEqualToString:body[@"what"]]) {
 			[[NSR sharedInstance] resetCruncher];
 		}
+		if([@"openPage" isEqualToString:body[@"what"]]) {
+			[[NSR sharedInstance] crunchEvent:@"openPage" payload:[[NSMutableDictionary alloc]init]];
+		}
 	}
 }
 
 -(void)registerUser {
 	NSLog(@"Register User");
 	NSRUser* user = [[NSRUser alloc] init];
-	user.email = @"<user>@neosurance.eu";
-	user.code = @"<user>@neosurance.eu";
-	user.firstname = @"<user>";
-	user.lastname = @"<user>";
+	user.email = self.config[@"user.email"];
+	user.code = self.config[@"user.code"];
+	user.firstname = self.config[@"user.firstname"];
+	user.lastname = self.config[@"user.lastname"];
 
+	NSDictionary* locals = [[NSMutableDictionary alloc]init];
+	[locals setValue:@"<push_token>" forKey:@"pushToken"];
+	[locals setValue:@"erjon.skora@neosurance.eu" forKey:@"email"];
+	[locals setValue:@"erjon" forKey:@"firstname"];
+	[locals setValue:@"skora" forKey:@"lastname"];
+	[locals setValue:@"tglgnn69a28g273e" forKey:@"fiscalCode"];
+	[locals setValue:@"via binda, 12" forKey:@"address"];
+	[locals setValue:@"Forlì" forKey:@"city"];
+	[locals setValue:@"FC" forKey:@"stateProvince"];
+	[user setLocals: locals];
+	
 	[[NSR sharedInstance] registerUser:user];
 }
 
 -(void)forgetUser {
 	NSLog(@"Forget User");
+	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+	[[NSR sharedInstance] crunchEvent:@"forgetUser" payload:payload];
+	[self performSelector:@selector(innerForgetUser) withObject:nil afterDelay:2];
+}
+
+-(void)innerForgetUser {
+	NSLog(@"innerForgetUser User");
 	[[NSR sharedInstance] forgetUser];
 }
 
@@ -94,7 +118,7 @@
 	[payload setValue:@"FR" forKey:@"toCode"];
 	[payload setValue:@"francia" forKey:@"toCountry"];
 	[payload setValue:[NSNumber numberWithInteger:1] forKey:@"fake"];
-	[[NSR sharedInstance] sendEvent:@"countryChange" payload:payload];
+	[[NSR sharedInstance] sendEvent:@"inAirport" payload:payload];
 }
 
 -(void)crunchEvent {
@@ -109,12 +133,12 @@
 	NSLog(@"Setup");
 	[[NSR sharedInstance] setWorkflowDelegate:[[NSRSampleWFDelegate alloc] init]];
 	NSMutableDictionary* settings = [[NSMutableDictionary alloc] init];
-	[settings setObject:@"https://sandbox.neosurancecloud.net/sdk/api/v1.0/" forKey:@"base_url"];
-	[settings setObject:@"<code>" forKey:@"code"];
-	[settings setObject:@"<secret_key>" forKey:@"secret_key"];
-
+	[settings setObject:self.config[@"base_url"] forKey:@"base_url"];
+	[settings setObject:self.config[@"code"] forKey:@"code"];
+	[settings setObject:self.config[@"secret_key"] forKey:@"secret_key"];
+	
 	[settings setObject:[NSNumber numberWithBool:YES] forKey:@"dev_mode"];
-
+	
 	[settings setObject:[NSNumber numberWithInt:UIStatusBarStyleDefault] forKey:@"bar_style"];
 	[settings setObject:[UIColor colorWithRed:0.2 green:1 blue:1 alpha:1] forKey:@"back_color"];
 	

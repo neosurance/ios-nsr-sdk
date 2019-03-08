@@ -12,7 +12,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.10";
+	return @"2.2.11";
 }
 
 -(NSString*)os {
@@ -578,8 +578,7 @@ static BOOL _logDisabled = NO;
 	if([self gracefulDegradate]) {
 		return;
 	}
-	NSDictionary* conf = [self getConf];
-	if ([self getBoolean:conf key:@"local_tracking"]) {
+	if ([self getBoolean:[self getConf] key:@"local_tracking"]) {
 		NSRLog(@"crunchEvent event %@", event);
 		NSRLog(@"crunchEvent payload %@", payload);
 		[self snapshot:event payload:payload];
@@ -647,7 +646,9 @@ static BOOL _logDisabled = NO;
 				if(![self getBoolean:responseObject key:@"skipPush"]) {
 					if([pushes count] > 0){
 						[self showPush: pushes[0]];
-						[self localCrunchEvent:@"pushed" payload:pushes[0]];
+						if ([self getBoolean:[self getConf] key:@"local_tracking"]) {
+							[self localCrunchEvent:@"pushed" payload:pushes[0]];
+						}
 					}
 				} else {
 					if([pushes count] > 0){
