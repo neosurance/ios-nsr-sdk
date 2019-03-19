@@ -79,11 +79,14 @@
 			[nsr showUrl:body[@"url"] params:body[@"params"]];
 		}
 		if ([@"store" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"data"] != nil) {
-			[[NSUserDefaults standardUserDefaults] setObject:body[@"data"] forKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
-			[[NSUserDefaults standardUserDefaults] synchronize];
+			[nsr storeData:body[@"key"] data:body[@"data"]];
 		}
 		if ([@"retrive" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"callBack"] != nil) {
-			NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",body[@"key"]]];
+			NSDictionary* val = [nsr retrieveData:body[@"key"]];
+			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
+		}
+		if ([@"retrieve" isEqualToString:body[@"what"]] && body[@"key"] != nil && body[@"callBack"] != nil) {
+			NSDictionary* val = [nsr retrieveData:body[@"key"]];
 			[self eval:[NSString stringWithFormat:@"%@(%@)", body[@"callBack"], val != nil?[nsr dictToJson:val]:@"null"]];
 		}
 		if([@"callApi" isEqualToString:body[@"what"]] && body[@"callBack"] != nil) {

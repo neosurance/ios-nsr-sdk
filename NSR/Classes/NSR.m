@@ -12,7 +12,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.11";
+	return @"2.2.12";
 }
 
 -(NSString*)os {
@@ -490,6 +490,9 @@ static BOOL _logDisabled = NO;
 		[mutableSettings setObject:[NSNumber numberWithFloat:g] forKey:@"back_color_g"];
 		[mutableSettings setObject:[NSNumber numberWithFloat:b] forKey:@"back_color_b"];
 		[mutableSettings setObject:[NSNumber numberWithFloat:a] forKey:@"back_color_a"];
+	}
+	if(mutableSettings[@"skin"] != nil) {
+		[self storeData:@"skin" data:mutableSettings[@"skin"]];
 	}
 	[self setSettings: mutableSettings];
 	if(!setupInited){
@@ -1079,5 +1082,15 @@ static BOOL _logDisabled = NO;
 	NSMutableDictionary* params = [[NSMutableDictionary alloc] init];
 	[params setObject:[self dictToJson:paymentInfo] forKey:@"paymentExecuted"];
 	[self showUrl:url params:params];
+}
+
+-(void)storeData:(NSString*)key data:(NSDictionary*)data{
+[[NSUserDefaults standardUserDefaults] setObject:data forKey:[NSString stringWithFormat:@"NSR_WV_%@",key]];
+[[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+-(NSDictionary*)retrieveData:(NSString*)key {
+	NSDictionary* val = [[NSUserDefaults standardUserDefaults] objectForKey:[NSString stringWithFormat:@"NSR_WV_%@",key]];
+	return val;
 }
 @end

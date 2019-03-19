@@ -58,6 +58,9 @@
 -(void)showPush:(NSDictionary*)push;
 -(BOOL)forwardNotification:(UNNotificationResponse*) response API_AVAILABLE(ios(10.0));
 
+-(void)storeData:(NSString*)key data:(NSDictionary*)data;
+-(NSDictionary*)retrieveData:(NSString*)key;
+
 -(void)loginExecuted:(NSString*) url;
 -(void)paymentExecuted:(NSDictionary*) paymentInfo url:(NSString*) url;
 
