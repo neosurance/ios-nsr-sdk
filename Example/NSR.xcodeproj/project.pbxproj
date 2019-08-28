@@ -19,7 +19,6 @@
 		6003F5A9195388D20070C39A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6003F5A8195388D20070C39A /* Images.xcassets */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
 		AC523539221C272D009752CA /* config.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC523538221C272D009752CA /* config.plist */; };
-		AC52353B221C273E009752CA /* config.private.plist in Resources */ = {isa = PBXBuildFile; fileRef = AC52353A221C273E009752CA /* config.private.plist */; };
 		AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */ = {isa = PBXBuildFile; fileRef = ACC62A8B2126F659009B634A /* NSR_push.wav */; };
 		ACC9203B219E028C00A7D545 /* sample.html in Resources */ = {isa = PBXBuildFile; fileRef = ACC9203A219E028C00A7D545 /* sample.html */; };
 /* End PBXBuildFile section */
@@ -50,7 +49,6 @@
 		A87E9A043CF59430B7593A0C /* Pods_NSR_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_NSR_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC102B402126BB1A001B8C19 /* NSRSampleAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSRSampleAppDelegate.h; sourceTree = "<group>"; };
 		AC523538221C272D009752CA /* config.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = config.plist; sourceTree = "<group>"; };
-		AC52353A221C273E009752CA /* config.private.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = config.private.plist; sourceTree = "<group>"; };
 		ACC62A8B2126F659009B634A /* NSR_push.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = NSR_push.wav; sourceTree = "<group>"; };
 		ACC9203A219E028C00A7D545 /* sample.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = sample.html; sourceTree = "<group>"; };
 		E46C9F1982CDCC5C3157ACE1 /* Pods-NSR_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-NSR_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-NSR_Example/Pods-NSR_Example.release.xcconfig"; sourceTree = "<group>"; };
@@ -75,7 +73,6 @@
 		6003F581195388D10070C39A = {
 			isa = PBXGroup;
 			children = (
-				AC52353A221C273E009752CA /* config.private.plist */,
 				AC523538221C272D009752CA /* config.plist */,
 				ACC9203A219E028C00A7D545 /* sample.html */,
 				ACC62A8B2126F659009B634A /* NSR_push.wav */,
@@ -208,6 +205,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -229,7 +227,6 @@
 				71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				AC523539221C272D009752CA /* config.plist in Resources */,
-				AC52353B221C273E009752CA /* config.private.plist in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
 				ACC9203B219E028C00A7D545 /* sample.html in Resources */,
 				AC8BD7AE2165384800FDC55D /* NSR_push.wav in Resources */,
