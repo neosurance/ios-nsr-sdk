@@ -973,6 +973,7 @@ static BOOL _logDisabled = NO;
 		}else{
 			[controller.view setBackgroundColor:topController.view.backgroundColor];
 		}
+		controller.modalPresentationStyle = 0;
 		[topController presentViewController:controller animated:YES completion:nil];
 	}
 }
