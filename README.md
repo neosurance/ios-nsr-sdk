@@ -23,7 +23,7 @@ pod 'NSR'
 
 1. Inside your **info.plist** be sure to have the following permissions:
 
-	```plist
+	```xml
 	<key>NSAppTransportSecurity</key>
 	<dict>
 	  <key>NSAllowsArbitraryLoads</key>
