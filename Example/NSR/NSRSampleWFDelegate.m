@@ -19,4 +19,8 @@
 -(void)confirmTransaction:(NSDictionary*)paymentInfo {
 }
 
+-(void)keepAlive {
+	NSLog(@"keepAlive");
+}
+
 @end
