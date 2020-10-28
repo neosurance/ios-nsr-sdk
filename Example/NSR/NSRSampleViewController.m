@@ -73,8 +73,8 @@
 	NSRUser* user = [[NSRUser alloc] init];
 	user.email = self.config[@"user.email"];
 	user.code = self.config[@"user.code"];
-	user.firstname = self.config[@"user.firstname"];
-	user.lastname = self.config[@"user.lastname"];
+	//user.firstname = self.config[@"user.firstname"];
+	//user.lastname = self.config[@"user.lastname"];
 
 	NSDictionary* locals = [[NSMutableDictionary alloc]init];
 	[locals setValue:self.config[@"user.email"] forKey:@"email"];
