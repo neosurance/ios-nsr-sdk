@@ -18,6 +18,7 @@
 -(BOOL)executeLogin:(NSString*)url;
 -(NSDictionary*)executePayment:(NSDictionary*)payment url:(NSString*)url;
 -(void)confirmTransaction:(NSDictionary*)paymentInfo;
+-(void)keepAlive;
 @end
 
 @interface NSR:NSObject<CLLocationManagerDelegate> {

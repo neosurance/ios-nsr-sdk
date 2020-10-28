@@ -140,6 +140,9 @@
 		if(nsr.workflowDelegate != nil && [@"confirmTransaction" isEqualToString:body[@"what"]] && body[@"paymentInfo"] != nil) {
 			[nsr.workflowDelegate confirmTransaction:body[@"paymentInfo"]];
 		}
+		if(nsr.workflowDelegate != nil && [@"keepAlive" isEqualToString:body[@"what"]]) {
+			[nsr.workflowDelegate keepAlive];
+		}
 	}
 }
 
