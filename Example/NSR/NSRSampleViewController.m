@@ -47,8 +47,8 @@
 		if([@"sendEvent" isEqualToString:body[@"what"]]) {
 			[self sendEvent];
 		}
-		if([@"crunchEvent" isEqualToString:body[@"what"]]) {
-			[self crunchEvent];
+		if([@"sendEvent2" isEqualToString:body[@"what"]]) {
+			[self sendEvent2];
 		}
 		if([@"appLogin" isEqualToString:body[@"what"]]) {
 			[self appLogin];
@@ -65,9 +65,6 @@
 		if([@"resetCruncher" isEqualToString:body[@"what"]]) {
 			[[NSR sharedInstance] resetCruncher];
 		}
-		if([@"openPage" isEqualToString:body[@"what"]]) {
-			[[NSR sharedInstance] crunchEvent:@"openPage" payload:[[NSMutableDictionary alloc]init]];
-		}
 	}
 }
 
@@ -80,14 +77,9 @@
 	user.lastname = self.config[@"user.lastname"];
 
 	NSDictionary* locals = [[NSMutableDictionary alloc]init];
-	[locals setValue:@"<push_token>" forKey:@"pushToken"];
-	[locals setValue:@"erjon.skora@neosurance.eu" forKey:@"email"];
-	[locals setValue:@"erjon" forKey:@"firstname"];
-	[locals setValue:@"skora" forKey:@"lastname"];
-	[locals setValue:@"tglgnn69a28g273e" forKey:@"fiscalCode"];
-	[locals setValue:@"via binda, 12" forKey:@"address"];
-	[locals setValue:@"Forlì" forKey:@"city"];
-	[locals setValue:@"FC" forKey:@"stateProvince"];
+	[locals setValue:self.config[@"user.email"] forKey:@"email"];
+	[locals setValue:self.config[@"user.firstname"] forKey:@"firstname"];
+	[locals setValue:self.config[@"user.lastname"] forKey:@"lastname"];
 	[user setLocals: locals];
 	
 	[[NSR sharedInstance] registerUser:user];
@@ -113,20 +105,13 @@
 -(void)sendEvent {
 	NSLog(@"Send Event");
 	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-	[payload setValue:@"IT" forKey:@"fromCode"];
-	[payload setValue:@"italia" forKey:@"fromCountry"];
-	[payload setValue:@"FR" forKey:@"toCode"];
-	[payload setValue:@"francia" forKey:@"toCountry"];
-	[payload setValue:[NSNumber numberWithInteger:1] forKey:@"fake"];
-	[[NSR sharedInstance] sendEvent:@"inAirport" payload:payload];
+	[[NSR sharedInstance] sendEvent:@"ondemand" payload:payload];
 }
 
--(void)crunchEvent {
-	NSLog(@"crunch Event");
+-(void)sendEvent2 {
+	NSLog(@"Send Event2");
 	NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-	[payload setValue:[NSNumber numberWithFloat:51.16135787] forKey:@"latitude"];
-	[payload setValue:[NSNumber numberWithFloat:-0.17700102] forKey:@"longitude"];
-	[[NSR sharedInstance] crunchEvent:@"position" payload:payload];
+	[[NSR sharedInstance] sendEvent:@"testpush" payload:payload];
 }
 
 -(void)setup {
