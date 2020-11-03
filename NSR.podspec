@@ -16,5 +16,4 @@ Neosurance SDK - Collects info from device sensors and from the hosting app - Ex
   s.resource_bundles = {
       'NSR' => ['NSR/Assets/*.*']
   }
-  s.dependency 'AFNetworking'
 end
