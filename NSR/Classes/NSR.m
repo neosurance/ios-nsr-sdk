@@ -3,8 +3,11 @@
 #import "NSRDefaultSecurityDelegate.h"
 #import "NSRControllerWebView.h"
 #import "NSREventWebView.h"
+#import "Reachability.h"
 
 @implementation NSR
+
+static Reachability *reachability;
 
 static BOOL _logDisabled = NO;
 +(BOOL)logDisabled {
@@ -329,9 +332,51 @@ static BOOL _logDisabled = NO;
 }
 
 -(void)traceConnection {
+	NSDictionary* conf = [self getConf];
+	if(conf != nil && [self getBoolean:conf[@"connection"] key:@"enabled"]) {
+		NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
+		NSString* connection = nil;
+		
+		reachability = [Reachability reachabilityForInternetConnection];
+		[reachability startNotifier];
+		
+		NetworkStatus status = [reachability currentReachabilityStatus];
+		
+		if(status == NotReachable)
+		{
+				//No internet
+				NSLog(@"traceConnection Reachability --> No internet");
+		}
+		else if (status == ReachableViaWiFi)
+		{
+				//WiFi
+				NSLog(@"traceConnection Reachability --> WiFi");
+				connection = @"wi-fi";
+		}
+		else if (status == ReachableViaWWAN)
+		{
+				//mobile
+				NSLog(@"traceConnection Reachability --> Mobile");
+				connection = @"mobile";
+		}
+		
+		NSString* lastConnection = [self getLastConnection];
+		
+		//[connection compare:lastConnection] != NSOrderedSame
+		if(connection != nil && ![connection isEqualToString:lastConnection] ) {
+				[payload setObject:connection forKey:@"type"];
+				[self crunchEvent:@"connection" payload:payload];
+				[self setLastConnection:connection];
+		}
+		NSRLog(@"traceConnection: %@",connection);
+		[self opportunisticTrace];
+	}
 }
 
 -(void)stopTraceConnection {
+	NSRLog(@"stopTraceConnection");
+	if(reachability != nil)
+		[reachability stopNotifier];
 }
 
 -(void)setLastConnection:(NSString*) lastConnection {
