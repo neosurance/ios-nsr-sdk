@@ -329,32 +329,9 @@ static BOOL _logDisabled = NO;
 }
 
 -(void)traceConnection {
-	NSDictionary* conf = [self getConf];
-	if(conf !=nil && [self getBoolean:conf[@"connection"] key:@"enabled"]) {
-		[[AFNetworkReachabilityManager sharedManager] setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status){
-			NSRLog(@"traceConnection IN");
-			NSMutableDictionary* payload = [[NSMutableDictionary alloc] init];
-			NSString* connection = nil;
-			if (status == AFNetworkReachabilityStatusReachableViaWiFi) {
-				connection = @"wi-fi";
-			} else if (status == AFNetworkReachabilityStatusReachableViaWWAN) {
-				connection = @"mobile";
-			}
-			if(connection != nil && [connection compare:[self getLastConnection]] != NSOrderedSame) {
-				[payload setObject:connection forKey:@"type"];
-				[self crunchEvent:@"connection" payload:payload];
-				[self setLastConnection:connection];
-			}
-			NSRLog(@"traceConnection: %@",connection);
-			[self opportunisticTrace];
-		}];
-		[[AFNetworkReachabilityManager sharedManager] startMonitoring];
-	}
 }
 
 -(void)stopTraceConnection {
-	NSRLog(@"stopTraceConnection");
-	[[AFNetworkReachabilityManager sharedManager] stopMonitoring];
 }
 
 -(void)setLastConnection:(NSString*) lastConnection {
