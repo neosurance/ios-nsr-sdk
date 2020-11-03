@@ -1,37 +1,16 @@
 PODS:
-  - AFNetworking (3.2.1):
-    - AFNetworking/NSURLSession (= 3.2.1)
-    - AFNetworking/Reachability (= 3.2.1)
-    - AFNetworking/Security (= 3.2.1)
-    - AFNetworking/Serialization (= 3.2.1)
-    - AFNetworking/UIKit (= 3.2.1)
-  - AFNetworking/NSURLSession (3.2.1):
-    - AFNetworking/Reachability
-    - AFNetworking/Security
-    - AFNetworking/Serialization
-  - AFNetworking/Reachability (3.2.1)
-  - AFNetworking/Security (3.2.1)
-  - AFNetworking/Serialization (3.2.1)
-  - AFNetworking/UIKit (3.2.1):
-    - AFNetworking/NSURLSession
-  - NSR (2.1.0):
-    - AFNetworking
+  - NSR (2.2.12)
 
 DEPENDENCIES:
   - NSR (from `../`)
-
-SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
-    - AFNetworking
 
 EXTERNAL SOURCES:
   NSR:
     :path: "../"
 
 SPEC CHECKSUMS:
-  AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
-  NSR: b769bcd65f181f03bc58072618ac9bb5c78510c2
+  NSR: 2c2b0ad89aac29592ee260c7e1fff3755b40732b
 
 PODFILE CHECKSUM: 5cac096783b4577d5ce4cf92957f0d7dc0cf7e7a
 
-COCOAPODS: 1.5.0
+COCOAPODS: 1.9.3
