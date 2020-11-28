@@ -1,6 +1,0 @@
-framework module Pods_NSR_Example {
-  umbrella header "Pods-NSR_Example-umbrella.h"
-
-  export *
-  module * { export * }
-}
