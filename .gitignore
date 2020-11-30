@@ -1,0 +1,9 @@
+/build
+.DS_Store
+./Example/config.plist
+./Example/config.base.plist
+./Example/Podfile.lock
+./Example/Pods
+./config.private.plist
+./config.plist
+
