@@ -15,7 +15,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.2.12";
+	return @"2.3.0";
 }
 
 -(NSString*)os {
