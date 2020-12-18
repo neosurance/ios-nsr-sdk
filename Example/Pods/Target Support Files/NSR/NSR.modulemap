@@ -1,6 +1,0 @@
-framework module NSR {
-  umbrella header "NSR-umbrella.h"
-
-  export *
-  module * { export * }
-}
