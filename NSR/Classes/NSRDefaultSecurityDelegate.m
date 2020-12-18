@@ -39,9 +39,7 @@
 				 {
 						 NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
 						 statusCode = httpResponse.statusCode;
-						 
 						 id jsonResponseObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-						 
 						 NSLog(@"sendAsynchronousRequest statusCode:%d - httpResponse.debugDescription: %@, jsonResponseObject: %@",(int)statusCode,httpResponse.debugDescription,jsonResponseObject);
 				 }
 				 

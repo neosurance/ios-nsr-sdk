@@ -15,7 +15,7 @@ static BOOL _logDisabled = NO;
 }
 
 -(NSString*)version {
-	return @"2.3.0";
+	return @"2.3.1";
 }
 
 -(NSString*)os {
@@ -687,6 +687,28 @@ static BOOL _logDisabled = NO;
 	}];
 }
 
+-(void)policies:(NSDictionary *)criteria completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandlerX {
+	if([self gracefulDegradate]) {
+		return;
+	}
+	NSRLog(@"sendEvent criteria %@", criteria);
+	
+	[self authorize:^(BOOL authorized) {
+		if(!authorized){
+			return;
+		}
+		
+		NSMutableDictionary* requestPayload = [[NSMutableDictionary alloc] init];
+		[requestPayload setObject:criteria forKey:@"criteria"];
+		
+		NSMutableDictionary* headers = [[NSMutableDictionary alloc] init];
+		[headers setObject:[self getToken] forKey:@"ns_token"];
+		[headers setObject:[self getLang] forKey:@"ns_lang"];
+		
+		[self.securityDelegate secureRequest:@"policies" payload:requestPayload headers:headers completionHandler:completionHandlerX];
+	}];
+}
+
 -(void)archiveEvent:(NSString *)event payload:(NSDictionary *)payload {
 	if([self gracefulDegradate]) {
 		return;
@@ -997,6 +1019,12 @@ static BOOL _logDisabled = NO;
 		}
 		controller.modalPresentationStyle = 0;
 		[topController presentViewController:controller animated:YES completion:nil];
+	}
+}
+
+-(void) closeView {
+	if (controllerWebView != nil) {
+		[controllerWebView close];
 	}
 }
 

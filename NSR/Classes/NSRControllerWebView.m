@@ -143,6 +143,9 @@
 		if(nsr.workflowDelegate != nil && [@"keepAlive" isEqualToString:body[@"what"]]) {
 			[nsr.workflowDelegate keepAlive];
 		}
+		if(nsr.workflowDelegate != nil && [@"goTo" isEqualToString:body[@"what"]] && body[@"area"] != nil) {
+			[nsr.workflowDelegate goTo: body[@"area"]];
+		}
 	}
 }
 

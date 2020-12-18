@@ -23,4 +23,8 @@
 	NSLog(@"keepAlive");
 }
 
+-(void)goTo:(NSString*)area {
+	NSLog(@"goTo: %@", area);
+}
+
 @end

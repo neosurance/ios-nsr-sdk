@@ -18,6 +18,7 @@
 -(NSDictionary*)executePayment:(NSDictionary*)payment url:(NSString*)url;
 -(void)confirmTransaction:(NSDictionary*)paymentInfo;
 -(void)keepAlive;
+-(void)goTo:(NSString*)area;
 @end
 
 @interface NSR:NSObject<CLLocationManagerDelegate> {
@@ -49,7 +50,9 @@
 -(void)showApp:(NSDictionary*)params;
 -(void)showUrl:(NSString*)url;
 -(void)showUrl:(NSString*)url params:(NSDictionary*)params;
+-(void)closeView;
 -(void)sendEvent:(NSString*)event payload:(NSDictionary*)payload;
+-(void)policies:(NSDictionary*)criteria completionHandler:(void (^)(NSDictionary* responseObject, NSError *error))completionHandler;
 -(void)crunchEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)archiveEvent:(NSString*)event payload:(NSDictionary*)payload;
 -(void)sendAction:(NSString*)action policyCode:(NSString*)code details:(NSString*)details;
