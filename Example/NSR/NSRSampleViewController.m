@@ -65,6 +65,20 @@
 		if([@"resetCruncher" isEqualToString:body[@"what"]]) {
 			[[NSR sharedInstance] resetCruncher];
 		}
+		if([@"closeView" isEqualToString:body[@"what"]]) {
+			[[NSR sharedInstance] closeView];
+		}
+		if([@"policies" isEqualToString:body[@"what"]]) {
+			NSMutableDictionary* criteria = [[NSMutableDictionary alloc] init];
+			[criteria setObject:[NSNumber numberWithBool:YES] forKey:@"available"];
+			[[NSR sharedInstance] policies:criteria completionHandler:^(NSDictionary *responseObject, NSError *error) {
+				if (error == nil) {
+					NSRLog(@"policies response %@", [[NSR sharedInstance] dictToJson:responseObject]);
+				} else {
+					NSRLog(@"policies error %@", error);
+				}
+			}];
+		}
 	}
 }
 
