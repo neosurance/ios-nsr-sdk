@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'NSR'
-  s.version          = '2.3.0'
+  s.version          = '2.3.1'
   s.summary          = 'Collects info from device sensors and from the hosting app'
 
   s.description      = <<-DESC
